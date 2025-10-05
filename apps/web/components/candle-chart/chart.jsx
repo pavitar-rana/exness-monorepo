@@ -30,8 +30,8 @@ export const ChartComponent = (props) => {
       wickDownColor: "#ef5350",
     });
 
-    chart.timeScale().fitContent();
-    chart.timeScale().scrollToPosition(5);
+    // chart.timeScale().fitContent();
+    // chart.timeScale().scrollToPosition(15);
 
     chartRef.current = chart;
     seriesRef.current = series;
@@ -51,7 +51,6 @@ export const ChartComponent = (props) => {
   }, [data, setNewData]);
   useEffect(() => {
     if (seriesRef.current && liveCandle) {
-      console.log("live candle: ", liveCandle);
       seriesRef.current.update(liveCandle);
     }
   }, [liveCandle]);
