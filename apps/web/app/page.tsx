@@ -3,45 +3,119 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { ChartComponent } from "@/components/candle-chart/chart";
-const initialData = [
-  { open: 10, high: 10.63, low: 9.49, close: 9.55, time: 1642427876 },
-  { open: 9.55, high: 10.3, low: 9.42, close: 9.94, time: 1642514276 },
-  { open: 9.94, high: 10.17, low: 9.92, close: 9.78, time: 1642600676 },
-  { open: 9.78, high: 10.59, low: 9.18, close: 9.51, time: 1642687076 },
-  { open: 9.51, high: 10.46, low: 9.1, close: 10.17, time: 1642773476 },
-  { open: 10.17, high: 10.96, low: 10.16, close: 10.47, time: 1642859876 },
-  { open: 10.47, high: 11.39, low: 10.4, close: 10.81, time: 1642946276 },
-  { open: 10.81, high: 11.6, low: 10.3, close: 10.75, time: 1643032676 },
-  { open: 10.75, high: 11.6, low: 10.49, close: 10.93, time: 1643119076 },
-  { open: 10.93, high: 11.53, low: 10.76, close: 10.96, time: 1643205476 },
-];
+import axios from "axios";
+import { printTreeView } from "next/dist/build/utils";
+import { Socket } from "node:net";
+// const initialData = [
+//   { open: 10, high: 10.63, low: 9.49, close: 9.55, time: 1642427876 },
+// ];
 
 export default function Home() {
+  const [lastMin, setLastMin] = useState<number>(0);
   const [livePriceAsk, setLivePriceAsk] = useState<number>(0);
   const [pastPriceAsk, setPastPriceAsk] = useState<number>(livePriceAsk);
   const [livePriceBid, setLivePriceBid] = useState<number>(0);
   const [pastPriceBid, setPastPriceBid] = useState<number>(livePriceBid);
+  const [liveCandle, setLIveCandel] = useState<null | Record<string, number>>(
+    null,
+  );
+
+  const [newData, setNewData] = useState<boolean>(false);
+
+  const [candles, setCandles] = useState<Record<string, number>[]>([]);
+
   useEffect(() => {
-    const livePriceFetch = async () => {
-      const socket = new WebSocket("ws://localhost:3001");
+    const fetchCandle = async () => {
+      const res = await axios.get("/api/get-candles?symbol=btcusdt");
+      const data = res.data.data;
 
-      socket.onopen = () => {
-        console.log("Socket connected");
+      const candleCleaner = (data: Record<string, string>) => {
+        const cleanData = {
+          time: Math.floor(new Date(data.time).getTime() / 1000),
+          open: parseFloat(parseFloat(data.open).toFixed(2)),
+          close: parseFloat(parseFloat(data.close).toFixed(2)),
+          high: parseFloat(parseFloat(data.high).toFixed(2)),
+          low: parseFloat(parseFloat(data.low).toFixed(2)),
+        };
+        return cleanData;
       };
 
-      socket.onmessage = (data) => {
-        setLivePriceAsk((prev) => {
-          setPastPriceAsk(prev);
-          return Number(data.data) + 10;
-        });
-        setLivePriceBid((prev) => {
-          setPastPriceBid(prev);
-          return Number(data.data) - 10;
-        });
-      };
+      const cleanData = data.map(candleCleaner);
+      const time: number = cleanData[cleanData.length - 1].time;
+
+      console.log(cleanData);
+      setLastMin(time);
+      setCandles(cleanData);
+      setNewData(true);
     };
-    livePriceFetch();
+
+    fetchCandle();
   }, []);
+
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:3001");
+
+    socket.onopen = () => {
+      console.log("Socket connected");
+    };
+
+    socket.onmessage = (data) => {
+      const newD = JSON.parse(data.data);
+      const tickTime = Math.floor(new Date(newD.t).getTime() / 1000);
+
+      const candleTime = Math.floor(tickTime / 60) * 60;
+      const open = parseFloat(parseFloat(newD.o).toFixed(2));
+      const close = parseFloat(parseFloat(newD.c).toFixed(2)) - 10;
+      const high = parseFloat(parseFloat(newD.h).toFixed(2));
+      const low = parseFloat(parseFloat(newD.l).toFixed(2));
+
+      setCandles((prevCandles) => {
+        if (!prevCandles) {
+          const firstCandle = { time: candleTime, open, close, high, low };
+          setLIveCandel(firstCandle);
+
+          return [firstCandle];
+        }
+
+        const lastCandle = prevCandles[prevCandles.length - 1];
+
+        if (lastCandle && lastCandle.time === candleTime) {
+          const updatedCandle = {
+            ...lastCandle,
+            close,
+            high: Math.max(lastCandle.high, parseFloat(newD.h)),
+            low: Math.min(lastCandle.low, parseFloat(newD.l)),
+          };
+          setLIveCandel(updatedCandle);
+          return [...prevCandles.slice(0, -1), updatedCandle];
+        } else {
+          const newCandle = {
+            time: candleTime,
+            open,
+            high,
+            low,
+            close,
+          };
+          setLIveCandel(newCandle);
+          return [...prevCandles, newCandle];
+        }
+      });
+
+      setLivePriceAsk((prev) => {
+        setPastPriceAsk(prev);
+        return Number(newD.c) + 10;
+      });
+      setLivePriceBid((prev) => {
+        setPastPriceBid(prev);
+        return Number(newD.c) - 10;
+      });
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, [lastMin]);
+
   return (
     <div className="w-screen h-screen flex  items-center p-4">
       <div className="w-70 flex flex-col gap-5">
@@ -49,9 +123,9 @@ export default function Home() {
           Ask Price:{" "}
           <span
             className={cn("transition-colors duration-300 ease-in-out p-2", {
-              "bg-red-500": livePriceBid < pastPriceBid,
-              "bg-green-500": livePriceBid >= pastPriceBid,
-              "bg-gray-300 text-black ": livePriceBid == pastPriceBid,
+              "bg-red-500 text-white": livePriceAsk < pastPriceAsk,
+              "bg-green-500 text-black": livePriceAsk >= pastPriceAsk,
+              "bg-gray-300 text-black ": livePriceAsk == pastPriceAsk,
             })}
           >
             {" "}
@@ -73,9 +147,18 @@ export default function Home() {
         </div>
       </div>
       <div>
-        <div className="w-[calc(100vw-312px)] h-[50vh]">
-          <ChartComponent data={initialData}></ChartComponent>
-        </div>
+        {candles.length > 0 && liveCandle ? (
+          <div className="w-[calc(100vw-312px)] h-[50vh]">
+            <ChartComponent
+              data={candles}
+              liveCandle={liveCandle}
+              newData={newData}
+              setNewData={setNewData}
+            ></ChartComponent>
+          </div>
+        ) : (
+          <div>No Chart to show</div>
+        )}
       </div>
     </div>
   );

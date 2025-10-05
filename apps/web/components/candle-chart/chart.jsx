@@ -2,9 +2,11 @@ import { createChart, ColorType, CandlestickSeries } from "lightweight-charts";
 import React, { useEffect, useRef } from "react";
 
 export const ChartComponent = (props) => {
-  const { data } = props;
+  const { data, liveCandle, newData, setNewData } = props;
 
   const chartContainerRef = useRef();
+  const chartRef = useRef();
+  const seriesRef = useRef();
 
   useEffect(() => {
     const handleResize = () => {
@@ -28,10 +30,11 @@ export const ChartComponent = (props) => {
       wickDownColor: "#ef5350",
     });
 
-    series.setData(data);
-
     chart.timeScale().fitContent();
     chart.timeScale().scrollToPosition(5);
+
+    chartRef.current = chart;
+    seriesRef.current = series;
 
     window.addEventListener("resize", handleResize);
 
@@ -40,7 +43,18 @@ export const ChartComponent = (props) => {
 
       chart.remove();
     };
-  }, [data]);
+  }, []);
+
+  useEffect(() => {
+    seriesRef.current.setData(data);
+    setNewData(false);
+  }, [data, setNewData]);
+  useEffect(() => {
+    if (seriesRef.current && liveCandle) {
+      console.log("live candle: ", liveCandle);
+      seriesRef.current.update(liveCandle);
+    }
+  }, [liveCandle]);
 
   return <div ref={chartContainerRef} />;
 };

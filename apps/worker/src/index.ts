@@ -20,7 +20,7 @@ const worker = new Worker(
     try {
       await client.query(`
         INSERT INTO assetPrice ("time", symbol, price)
-        VALUES (NOW(), 'btcusdt', ${job.data})
+        VALUES (NOW(), 'btcusdt', ${(parseFloat(job.data) - 10).toString()})
         `);
     } catch (e) {
       console.error("error", e);
