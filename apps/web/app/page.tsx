@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
+import { LucideMoveVertical } from "lucide-react";
 // const initialData = [
 //   { open: 10, high: 10.63, low: 9.49, close: 9.55, time: 1642427876 },
 // ];
@@ -144,6 +145,10 @@ export default function Home() {
   const [trades, setTrades] = useState([]);
   const closeRef = useRef(0);
 
+  const [leverage, setLeverage] = useState(1);
+
+  const [amount, setAmount] = useState<number>(1);
+
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:3001");
 
@@ -152,7 +157,9 @@ export default function Home() {
     };
 
     socket.onmessage = (data) => {
-      const newD = JSON.parse(data.data);
+      const d = JSON.parse(data.data);
+      const newD = d.k;
+      const price = d.price;
       const tickTime = Math.floor(new Date(newD.t).getTime() / 1000);
 
       const candleTime = Math.floor(tickTime / 60) * 60;
@@ -162,7 +169,6 @@ export default function Home() {
       const c2 = parseFloat(parseFloat(newD.c).toFixed(2)) + 10;
       const high = parseFloat(parseFloat(newD.h).toFixed(2));
       const low = parseFloat(parseFloat(newD.l).toFixed(2));
-
       if (user?.balance?.length > 0) {
         let portfolioValue = 0;
         for (const t of user.balance) {
@@ -180,13 +186,6 @@ export default function Home() {
         });
       }
       setCandles((prevCandles) => {
-        if (!prevCandles) {
-          const firstCandle = { time: candleTime, open, close, high, low };
-          setLIveCandel(firstCandle);
-
-          return [firstCandle];
-        }
-
         const lastCandle = prevCandles[prevCandles.length - 1];
 
         if (lastCandle && lastCandle.time === candleTime) {
@@ -213,11 +212,11 @@ export default function Home() {
 
       setLivePriceAsk((prev) => {
         setPastPriceAsk(prev);
-        return Number(newD.c) + 10;
+        return price.ask;
       });
       setLivePriceBid((prev) => {
         setPastPriceBid(prev);
-        return parseFloat((Number(newD.c) - 10).toFixed(2));
+        return price.bid;
       });
 
       closeRef.current = parseFloat((Number(newD.c) - 10).toFixed(2));
@@ -295,6 +294,7 @@ export default function Home() {
     const res = await axios.post("http://localhost:3002/buy?id=1", {
       symbol: "btcusdt",
       quantity: volume,
+      leverage,
     });
 
     console.log(res.data);
@@ -374,26 +374,99 @@ export default function Home() {
           sell : {livePriceBid}
         </div>
 
-        <div>
-          <Label className="flex flex-col items-baseline">
-            Volume
-            <Input
-              type="number"
-              step={0.01}
-              min={0.01}
-              value={volume}
-              onChange={(e) => {
-                if (!e.target.value) {
-                  setVolume(0.01);
-                } else {
-                  setVolume(parseFloat(parseFloat(e.target.value).toFixed(2)));
-                }
-              }}
-            />
-          </Label>
-        </div>
+        {leverage === 1 ? (
+          <div>
+            <Label className="flex flex-col items-baseline">
+              Volume
+              <Input
+                type="number"
+                step={0.01}
+                min={0.01}
+                value={volume}
+                onChange={(e) => {
+                  if (!e.target.value) {
+                    setVolume(0.01);
+                  } else {
+                    setVolume(
+                      parseFloat(parseFloat(e.target.value).toFixed(2)),
+                    );
+                  }
+                }}
+              />
+            </Label>
+          </div>
+        ) : (
+          <div>
+            <Label className="flex flex-col items-baseline">
+              Amount
+              <Input
+                type="number"
+                step={10}
+                min={0.01}
+                value={amount}
+                onChange={(e) => {
+                  if (!e.target.value) {
+                    setAmount(1);
+                  } else if (user.usd < e.target.value) {
+                    setAmount(1);
+                  } else {
+                    setAmount(
+                      parseFloat(parseFloat(e.target.value).toFixed(2)),
+                    );
+                  }
+                }}
+              />
+            </Label>
+          </div>
+        )}
 
         <div>{type === "buy" ? "Buy" : "Sell"} for : (volume) </div>
+
+        <div>
+          <div>Leverage</div>
+          <div className="flex  justify-between">
+            <div
+              className={cn("border rounded-md border-border px-3 py-2 ", {
+                "bg-green-400 text-black": leverage == 1,
+              })}
+              onClick={() => {
+                setLeverage(1);
+              }}
+            >
+              1x
+            </div>
+            <div
+              className={cn("border rounded-md border-border px-3 py-2", {
+                "bg-green-400 text-black": leverage == 10,
+              })}
+              onClick={() => {
+                setLeverage(10);
+              }}
+            >
+              10x
+            </div>
+            <div
+              className={cn("border rounded-md border-border px-3 py-2", {
+                "bg-green-400 text-black": leverage == 50,
+              })}
+              onClick={() => {
+                setLeverage(50);
+              }}
+            >
+              50x
+            </div>
+            <div
+              className={cn("border rounded-md border-border px-3 py-2", {
+                "bg-green-400 text-black": leverage == 100,
+              })}
+              onClick={() => {
+                setLeverage(100);
+              }}
+            >
+              100x
+            </div>
+          </div>
+        </div>
         <div>
           <Button
             className="w-full mt-4"

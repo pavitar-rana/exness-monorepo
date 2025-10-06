@@ -14,7 +14,8 @@ const users = [
   },
 ];
 
-let price = 0;
+let bid = 0;
+let ask = 0;
 
 const socket = new WebSocket("ws://localhost:3001");
 
@@ -24,7 +25,8 @@ socket.onopen = () => {
 
 socket.onmessage = (event) => {
   const data = JSON.parse(event.data);
-  price = parseFloat(parseFloat(data.c).toFixed(2));
+  bid = data.price.bid;
+  ask = data.price.ask;
 };
 
 app.get("/", (req, res) => {
@@ -32,20 +34,49 @@ app.get("/", (req, res) => {
 });
 
 app.post("/buy", (req, res) => {
-  if (price !== 0) {
+  if (ask !== 0 || bid !== 0) {
     const { id } = req.query;
     const buyD = req.body;
     const user = users.find((u) => (u.id = id));
+    if (buyD.leverage === 1) {
+      const totalAmt = parseFloat(parseFloat(ask * buyD.quantity).toFixed(2));
 
-    const totalAmt = parseFloat(
-      parseFloat((price + 10) * buyD.quantity).toFixed(2),
-    );
+      const data = {
+        ...buyD,
+        side: "CALL",
+        totalAmt,
+        price: ask,
+      };
 
-    const finalPrice = price + 10;
+      if (user.usd < totalAmt) {
+        return res.json({ message: "Insufficient bala" });
+      }
+
+      user.usd -= totalAmt;
+      user.balance.push(data);
+      return res.json({ message: "Purchase successful", user });
+    }
+    return res.json({ message: "Error" });
+  } else {
+    const collateral = buyD.amount;
+    const leverage = buyD.leverage;
+    const exposure = parseFloat((collateral * leverage).toFixed(2));
+  }
+});
+
+app.post("/sell", (req, res) => {
+  if (ask !== 0 || bid !== 0) {
+    const { id } = req.query;
+    const sellD = req.body;
+
+    const user = users.find((u) => u.id == id);
+    const totalAmt = parseFloat(parseFloat(ask * sellD.quantity).toFixed(2));
+
+    const finalPrice = bid;
 
     const data = {
-      ...buyD,
-      side: "CALL",
+      ...sellD,
+      side: "PUT",
       totalAmt,
       price: finalPrice,
     };
@@ -54,68 +85,34 @@ app.post("/buy", (req, res) => {
       return res.json({ message: "Insufficient bala" });
     }
 
-    user.usd -= totalAmt;
     user.balance.push(data);
-    return res.json({ message: "Purchase successful", user });
+    user.usd -= totalAmt;
+    return res.json({ message: "Sell confirmeed", user });
   }
-  return res.json({ message: "Error" });
-});
-
-app.post("/sell", (req, res) => {
-  const { id } = req.query;
-  const sellD = req.body;
-
-  const user = users.find((u) => u.id == id);
-  const totalAmt = parseFloat(
-    parseFloat((price + 10) * sellD.quantity).toFixed(2),
-  );
-
-  const finalPrice = price - 10;
-
-  const data = {
-    ...sellD,
-    side: "PUT",
-    totalAmt,
-    price: finalPrice,
-  };
-
-  if (user.usd < totalAmt) {
-    return res.json({ message: "Insufficient bala" });
-  }
-
-  user.balance.push(data);
-  user.usd -= totalAmt;
-  return res.json({ message: "Sell confirmeed", user });
 });
 
 app.post("/close", (req, res) => {
-  const { id } = req.query;
-  const user = users.find((u) => u.id == id);
+  if (ask !== 0 || bid !== 0) {
+    const { id } = req.query;
+    const { trade } = req.body;
+    const user = users.find((u) => u.id == id);
 
-  console.log("user.usd ", user.usd);
+    const removeIndex = user.balance.findIndex((t) => t.id === trade.id);
+    let liq;
 
-  const { trade } = req.body;
+    if (trade.side == "CALL") {
+      liq = trade.totalAmt + (bid - trade.price) * trade.volume;
+    } else {
+      liq = trade.totalAmt + (trade.price - ask) * trade.volume;
+    }
 
-  const removeIndex = user.balance.findIndex((t) => t.id === trade.id);
+    if (removeIndex !== -1) {
+      user.balance.splice(removeIndex, 1); // remove the trade
+    }
+    user.usd = parseFloat(user.usd.toFixed(2)) + parseFloat(liq.toFixed(2));
 
-  if (removeIndex !== -1) {
-    user.balance.splice(removeIndex, 1); // remove the trade
+    return res.json({ message: "closing", user });
   }
-  console.log(trade);
-  console.log("price ", price);
-
-  let liq;
-
-  if (trade.side == "CALL") {
-    liq = trade.totalAmt + (trade.close - trade.price) * trade.volume;
-  } else {
-    liq = trade.totalAmt + (trade.price - trade.ask) * trade.volume;
-  }
-  console.log("liq ", liq);
-
-  user.usd = parseFloat(user.usd.toFixed(2)) + parseFloat(liq.toFixed(2));
-
-  return res.json({ message: "closing", user });
 });
 
 app.get("/balance", (req, res) => {
