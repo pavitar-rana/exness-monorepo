@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { isPropertyAccessChain } from "typescript";
 
 const app = express();
 app.use(cors());
@@ -85,6 +86,36 @@ app.post("/sell", (req, res) => {
   user.balance.push(data);
   user.usd -= totalAmt;
   return res.json({ message: "Sell confirmeed", user });
+});
+
+app.post("/close", (req, res) => {
+  const { id } = req.query;
+  const user = users.find((u) => u.id == id);
+
+  console.log("user.usd ", user.usd);
+
+  const { trade } = req.body;
+
+  const removeIndex = user.balance.findIndex((t) => t.id === trade.id);
+
+  if (removeIndex !== -1) {
+    user.balance.splice(removeIndex, 1); // remove the trade
+  }
+  console.log(trade);
+  console.log("price ", price);
+
+  let liq;
+
+  if (trade.side == "CALL") {
+    liq = trade.totalAmt + (trade.close - trade.price) * trade.volume;
+  } else {
+    liq = trade.totalAmt + (trade.price - trade.ask) * trade.volume;
+  }
+  console.log("liq ", liq);
+
+  user.usd = parseFloat(user.usd.toFixed(2)) + parseFloat(liq.toFixed(2));
+
+  return res.json({ message: "closing", user });
 });
 
 app.get("/balance", (req, res) => {
