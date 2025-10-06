@@ -31,6 +31,8 @@ type portfolioTable = {
   close: number;
   ask: number;
   amount: number;
+  leverage: number;
+  exposure: number;
   quantity: number;
   type: "CALL" | "PUT";
 };
@@ -80,6 +82,7 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
   },
   {
     accessorKey: "close",
+
     header: "Current Price",
   },
 
@@ -91,6 +94,8 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
       const ask = row.original.ask;
       const price = row.original.price;
       const quantity = row.original.quantity;
+      const leverage = row.original.leverage;
+      const exposure = row.original.exposure;
       const side = row.original.type;
 
       let portfolioValue = 0;
@@ -395,9 +400,7 @@ export default function Home() {
           </Label>
         </div>
 
-        <div>{type === "buy" ? "Buy" : "Sell"} for : (volume) </div>
-
-        <div>
+        <div className="mt-2">
           <div>Leverage</div>
           <div className="flex  justify-between">
             <div

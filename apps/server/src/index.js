@@ -56,13 +56,32 @@ app.post("/buy", (req, res) => {
       user.usd -= buyD.amount;
       user.balance.push(data);
       return res.json({ message: "Purchase successful", user });
+    } else {
+      const collateral = buyD.amount;
+      const leverage = buyD.leverage;
+      const exposure = parseFloat((collateral * leverage).toFixed(2));
+
+      const quantity = parseFloat((exposure / ask).toFixed(5));
+
+      const data = {
+        ...buyD,
+        quantity,
+        side: "CALL",
+        amount: buyD.amount,
+        exposure,
+        price: ask,
+      };
+
+      if (user.usd < buyD.amount) {
+        return res.json({ message: "Insufficient bala" });
+      }
+
+      user.usd -= buyD.amount;
+      user.balance.push(data);
+      return res.json({ message: "Purchase successful", user });
     }
-    return res.json({ message: "Error" });
-  } else {
-    const collateral = buyD.amount;
-    const leverage = buyD.leverage;
-    const exposure = parseFloat((collateral * leverage).toFixed(2));
   }
+  return res.json({ message: "Error" });
 });
 
 app.post("/sell", (req, res) => {
