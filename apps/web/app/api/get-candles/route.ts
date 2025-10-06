@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const result = await client.query(
     `
     SELECT bucket AS time, open, high, low, close
-    FROM assetPrice_1m
+    FROM metrics.assetPrice_1m
     WHERE symbol = $1
     ORDER BY bucket ASC
   `,

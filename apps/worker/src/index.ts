@@ -19,7 +19,7 @@ const worker = new Worker(
     console.log(job.data);
     try {
       await client.query(`
-        INSERT INTO assetPrice ("time", symbol, price)
+        INSERT INTO metrics.assetPrice ("time", symbol, price)
         VALUES (NOW(), 'btcusdt', ${(parseFloat(job.data) - 10).toString()})
         `);
     } catch (e) {
@@ -28,3 +28,5 @@ const worker = new Worker(
   },
   { connection },
 );
+
+console.log("Price to db worker started");
