@@ -30,7 +30,7 @@ type portfolioTable = {
   volume: number;
   close: number;
   ask: number;
-  totalAmt: number;
+  amount: number;
   quantity: number;
   type: "CALL" | "PUT";
 };
@@ -136,7 +136,6 @@ export default function Home() {
   const [liveCandle, setLIveCandel] = useState<null | Record<string, number>>(
     null,
   );
-  const [volume, setVolume] = useState<number>(0.01);
   const [type, setType] = useState<string>("buy");
   const [newData, setNewData] = useState<boolean>(false);
   const [candles, setCandles] = useState<Record<string, number>[]>([]);
@@ -172,10 +171,12 @@ export default function Home() {
       if (user?.balance?.length > 0) {
         let portfolioValue = 0;
         for (const t of user.balance) {
+          console.log(t);
+
           if (t.side === "CALL") {
-            portfolioValue += t.totalAmt + (close - t.price) * t.quantity;
+            portfolioValue += t.amount + (close - t.price) * t.quantity;
           } else if (t.side === "PUT") {
-            portfolioValue += t.totalAmt + (t.price - c2) * t.quantity;
+            portfolioValue += t.amount + (t.price - c2) * t.quantity;
           }
         }
 
@@ -260,7 +261,6 @@ export default function Home() {
           ...b,
           volume: b.quantity,
           type: b.side,
-          // close: closeRef.current,
         };
       });
 
@@ -293,8 +293,8 @@ export default function Home() {
   const buyOrder = async () => {
     const res = await axios.post("http://localhost:3002/buy?id=1", {
       symbol: "btcusdt",
-      quantity: volume,
       leverage,
+      amount,
     });
 
     console.log(res.data);
@@ -302,7 +302,7 @@ export default function Home() {
   const sellOrder = async () => {
     const res = await axios.post("http://localhost:3002/sell?id=1", {
       symbol: "btcusdt",
-      quantity: volume,
+      amount,
     });
 
     console.log(res.data);
@@ -374,51 +374,26 @@ export default function Home() {
           sell : {livePriceBid}
         </div>
 
-        {leverage === 1 ? (
-          <div>
-            <Label className="flex flex-col items-baseline">
-              Volume
-              <Input
-                type="number"
-                step={0.01}
-                min={0.01}
-                value={volume}
-                onChange={(e) => {
-                  if (!e.target.value) {
-                    setVolume(0.01);
-                  } else {
-                    setVolume(
-                      parseFloat(parseFloat(e.target.value).toFixed(2)),
-                    );
-                  }
-                }}
-              />
-            </Label>
-          </div>
-        ) : (
-          <div>
-            <Label className="flex flex-col items-baseline">
-              Amount
-              <Input
-                type="number"
-                step={10}
-                min={0.01}
-                value={amount}
-                onChange={(e) => {
-                  if (!e.target.value) {
-                    setAmount(1);
-                  } else if (user.usd < e.target.value) {
-                    setAmount(1);
-                  } else {
-                    setAmount(
-                      parseFloat(parseFloat(e.target.value).toFixed(2)),
-                    );
-                  }
-                }}
-              />
-            </Label>
-          </div>
-        )}
+        <div>
+          <Label className="flex flex-col items-baseline">
+            Amount
+            <Input
+              type="number"
+              step={10}
+              min={0}
+              value={amount}
+              onChange={(e) => {
+                if (!e.target.value) {
+                  setAmount(0);
+                } else if (user.usd < e.target.value) {
+                  setAmount(1);
+                } else {
+                  setAmount(parseFloat(parseFloat(e.target.value).toFixed(2)));
+                }
+              }}
+            />
+          </Label>
+        </div>
 
         <div>{type === "buy" ? "Buy" : "Sell"} for : (volume) </div>
 

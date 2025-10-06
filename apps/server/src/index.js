@@ -39,20 +39,21 @@ app.post("/buy", (req, res) => {
     const buyD = req.body;
     const user = users.find((u) => (u.id = id));
     if (buyD.leverage === 1) {
-      const totalAmt = parseFloat(parseFloat(ask * buyD.quantity).toFixed(2));
+      const quantity = parseFloat((buyD.amount / ask).toFixed(5));
 
       const data = {
         ...buyD,
+        quantity,
         side: "CALL",
-        totalAmt,
+        amount: buyD.amount,
         price: ask,
       };
 
-      if (user.usd < totalAmt) {
+      if (user.usd < buyD.amount) {
         return res.json({ message: "Insufficient bala" });
       }
 
-      user.usd -= totalAmt;
+      user.usd -= buyD.amount;
       user.balance.push(data);
       return res.json({ message: "Purchase successful", user });
     }
@@ -70,23 +71,22 @@ app.post("/sell", (req, res) => {
     const sellD = req.body;
 
     const user = users.find((u) => u.id == id);
-    const totalAmt = parseFloat(parseFloat(ask * sellD.quantity).toFixed(2));
-
-    const finalPrice = bid;
+    const quantity = parseFloat((sellD.amount / ask).toFixed(5));
 
     const data = {
       ...sellD,
+      quantity,
       side: "PUT",
-      totalAmt,
-      price: finalPrice,
+      amount: sellD.amount,
+      price: bid,
     };
 
-    if (user.usd < totalAmt) {
+    if (user.usd < sellD.amount) {
       return res.json({ message: "Insufficient bala" });
     }
 
     user.balance.push(data);
-    user.usd -= totalAmt;
+    user.usd -= sellD.amount;
     return res.json({ message: "Sell confirmeed", user });
   }
 });
@@ -101,14 +101,20 @@ app.post("/close", (req, res) => {
     let liq;
 
     if (trade.side == "CALL") {
-      liq = trade.totalAmt + (bid - trade.price) * trade.volume;
+      console.log("trade", trade);
+      console.log("bid: ", bid);
+      liq = trade.amount + (bid - trade.price) * trade.volume;
     } else {
-      liq = trade.totalAmt + (trade.price - ask) * trade.volume;
+      liq = trade.amount + (trade.price - ask) * trade.volume;
     }
 
     if (removeIndex !== -1) {
       user.balance.splice(removeIndex, 1); // remove the trade
     }
+
+    console.log("liq : ", liq);
+    console.log("user.usd : ", user.usd);
+
     user.usd = parseFloat(user.usd.toFixed(2)) + parseFloat(liq.toFixed(2));
 
     return res.json({ message: "closing", user });
