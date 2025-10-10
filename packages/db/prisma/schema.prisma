@@ -45,5 +45,10 @@ model Trade {
   leverage Decimal
   exposure Decimal
 
+  isClosed   Boolean   @default(false)
+  closedAt   DateTime?
+  closePrice Decimal?
+  pnl        Decimal?
+
   @@schema("app")
 }

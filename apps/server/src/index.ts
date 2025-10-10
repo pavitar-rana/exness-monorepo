@@ -66,10 +66,10 @@ app.post("/buy", verifyUser, async (req: any, res) => {
       // console.log("buyD.amount : ", buyD.amount);
       // console.log("ask : ", ask);
       if (user.usd < buyD.amount) {
-        return res.json({ message: "Insufficient bala" });
+        return res.json({ message: "Insufficient balance" });
       }
 
-      await prisma.trade.create({
+      const trade = await prisma.trade.create({
         data: {
           userId: user.id,
           symbol: buyD.symbol,
@@ -84,10 +84,14 @@ app.post("/buy", verifyUser, async (req: any, res) => {
 
       const updatedUser = await prisma.user.update({
         where: { id: user.id },
-        data: { usd: user.usd - buyD.amount },
+        data: { usd: Number(user.usd) - buyD.amount },
       });
 
-      return res.json({ message: "Purchase successful", user: updatedUser });
+      return res.json({
+        message: "Purchase successful",
+        user: updatedUser,
+        trade,
+      });
     } else {
       const collateral = buyD.amount;
       const leverage = buyD.leverage;
@@ -101,7 +105,7 @@ app.post("/buy", verifyUser, async (req: any, res) => {
         return res.json({ message: "Insufficient bala" });
       }
 
-      await prisma.trade.create({
+      const trade = await prisma.trade.create({
         data: {
           userId: user.id,
           amount: buyD.amount,
@@ -115,9 +119,13 @@ app.post("/buy", verifyUser, async (req: any, res) => {
       });
       const updatedUser = await prisma.user.update({
         where: { id: user.id },
-        data: { usd: user.usd - buyD.amount },
+        data: { usd: Number(user.usd) - buyD.amount },
       });
-      return res.json({ message: "Purchase successful", user: updatedUser });
+      return res.json({
+        message: "Purchase successful",
+        user: updatedUser,
+        trade,
+      });
     }
   }
   return res.json({ message: "Error" });
@@ -152,12 +160,12 @@ app.post("/sell", verifyUser, async (req: any, res) => {
       return res.json({ message: "Insufficient bala" });
     }
 
-    await prisma.trade.create({
+    const trade = await prisma.trade.create({
       data: {
         userId: user.id,
         amount: sellD.amount,
         symbol: sellD.symbol,
-        side: "CALL",
+        side: "PUT",
         price: ask,
         quantity,
         exposure: exposure,
@@ -167,9 +175,9 @@ app.post("/sell", verifyUser, async (req: any, res) => {
 
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
-      data: { usd: user.usd - sellD.amount },
+      data: { usd: Number(user.usd) - sellD.amount },
     });
-    return res.json({ message: "Sell confirmeed", user: updatedUser });
+    return res.json({ message: "Sell confirmeed", user: updatedUser, trade });
   }
 });
 
@@ -210,15 +218,17 @@ app.post("/close", async (req, res) => {
         (Number(trade.price) - ask) * Number(trade.volume);
     }
 
-    try {
-      await prisma.trade.delete({
-        where: {
-          id: trade.id,
-        },
-      });
-    } catch (e) {
-      console.error("Got error while closing/deleting trade : ", e);
-    }
+    const tradee = await prisma.trade.update({
+      where: {
+        id: trade.id,
+      },
+      data: {
+        isClosed: true,
+        closePrice: bid,
+        pnl: liq,
+        closedAt: new Date(),
+      },
+    });
 
     console.log("liq : ", liq);
     console.log("user.usd : ", user?.usd);
@@ -237,7 +247,7 @@ app.post("/close", async (req, res) => {
       },
     });
 
-    return res.json({ message: "closing", user });
+    return res.json({ message: "closing", user: updatedUser, trade: tradee });
   }
 });
 
@@ -255,10 +265,21 @@ app.get("/balance", async (req, res) => {
   });
 
   if (!user) {
-    return res.status(404).json({ error: "User not found" });
+    return res.json(404).json({ error: "user not found" });
   }
 
-  return res.json({ message: "found you ", user });
+  const history = user?.Balance.filter((t) => t.isClosed === true);
+
+  const openTrades = user.Balance.filter((t) => t.isClosed === false);
+
+  return res.json({
+    message: "Found user",
+    user: {
+      ...user,
+      Balance: openTrades,
+    },
+    history,
+  });
 });
 
 app.listen(3002, () => {

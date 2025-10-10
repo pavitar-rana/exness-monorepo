@@ -39,6 +39,9 @@ type portfolioTable = {
   exposure: number;
   quantity: number;
   userId: string;
+  setUser: React.Dispatch<React.SetStateAction<unknown>>;
+  setTrades: React.Dispatch<React.SetStateAction<unknown>>;
+  setHistory: React.Dispatch<React.SetStateAction<unknown>>;
   type: "CALL" | "PUT";
 };
 
@@ -119,6 +122,9 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
     cell: ({ row }) => {
       const trade = row.original;
       const userId = row.original.userId;
+      const setTrades = row.original.setTrades;
+      const setUser = row.original.setUser;
+      const setHistory = row.original.setHistory;
 
       return (
         <div>
@@ -130,6 +136,26 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
                   trade,
                 },
               );
+
+              setTrades((prevTrades) =>
+                prevTrades.filter((t) => t.id !== res.data.trade.id),
+              );
+
+              setHistory((prev) => {
+                return [...prev, res.data.trade];
+              });
+
+              setUser((prev) => {
+                const u = {
+                  ...prev,
+                  usd: res.data.user.usd,
+                  Balance: prev.Balance.filter(
+                    (t) => t.id !== res.data.trade.id,
+                  ),
+                };
+                return u;
+              });
+
               console.log(res.data);
             }}
           >
@@ -156,6 +182,7 @@ export default function Home() {
   const [newData, setNewData] = useState<boolean>(false);
   const [candles, setCandles] = useState<Record<string, number>[]>([]);
   const [user, setUser] = useState<any>();
+  const [history, setHistory] = useState([]);
   const [balance, setBalance] = useState(0);
   const [trades, setTrades] = useState([]);
   const [userId, setUserId] = useState("");
@@ -177,6 +204,7 @@ export default function Home() {
       const newD = d.k;
       const price = d.price;
       const tickTime = Math.floor(new Date(newD.t).getTime() / 1000);
+      console.log("history : ", history);
 
       const candleTime = Math.floor(tickTime / 60) * 60;
       const open = parseFloat(parseFloat(newD.o).toFixed(2));
@@ -291,6 +319,8 @@ export default function Home() {
         };
       });
 
+      setHistory(res.data.history);
+
       console.log("tt", tt);
       setTrades(tt);
       console.log("usder", res.data.user);
@@ -313,6 +343,9 @@ export default function Home() {
           close: livePriceBid,
           ask: livePriceAsk,
           userId: userId,
+          setTrades,
+          setUser,
+          setHistory,
         };
       });
 
@@ -341,6 +374,19 @@ export default function Home() {
       },
     );
 
+    setTrades((prev) => {
+      return [...prev, res.data.trade];
+    });
+
+    setUser((prev) => {
+      const u = {
+        ...prev,
+        usd: res.data.user.usd,
+        Balance: [...prev.Balance, res.data.trade],
+      };
+      return u;
+    });
+
     console.log(res.data);
   };
 
@@ -365,6 +411,19 @@ export default function Home() {
         },
       },
     );
+
+    setTrades((prev) => {
+      return [...prev, res.data.trade];
+    });
+
+    setUser((prev) => {
+      const u = {
+        ...prev,
+        usd: res.data.user.usd,
+        Balance: [...prev.Balance, res.data.trade],
+      };
+      return u;
+    });
 
     console.log(res.data);
   };
