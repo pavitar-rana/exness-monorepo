@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { LucideMoveVertical } from "lucide-react";
+import { getCsrfToken, getSession, useSession } from "next-auth/react";
+import { CANCELLED } from "node:dns/promises";
+import { stat } from "node:fs/promises";
+import { getJwtToken } from "@/functions/get-jwt";
 // const initialData = [
 //   { open: 10, high: 10.63, low: 9.49, close: 9.55, time: 1642427876 },
 // ];
@@ -34,6 +38,7 @@ type portfolioTable = {
   leverage: number;
   exposure: number;
   quantity: number;
+  userId: string;
   type: "CALL" | "PUT";
 };
 
@@ -113,14 +118,18 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
     id: "actions",
     cell: ({ row }) => {
       const trade = row.original;
+      const userId = row.original.userId;
 
       return (
         <div>
           <Button
             onClick={async () => {
-              const res = await axios.post("http://localhost:3002/close?id=1", {
-                trade,
-              });
+              const res = await axios.post(
+                `http://localhost:3002/close?id=${userId}`,
+                {
+                  trade,
+                },
+              );
               console.log(res.data);
             }}
           >
@@ -133,6 +142,8 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
 ];
 
 export default function Home() {
+  const { data: session, status } = useSession();
+
   const [lastMin, setLastMin] = useState<number>(0);
   const [livePriceAsk, setLivePriceAsk] = useState<number>(0);
   const [pastPriceAsk, setPastPriceAsk] = useState<number>(livePriceAsk);
@@ -147,6 +158,7 @@ export default function Home() {
   const [user, setUser] = useState<any>();
   const [balance, setBalance] = useState(0);
   const [trades, setTrades] = useState([]);
+  const [userId, setUserId] = useState("");
   const closeRef = useRef(0);
 
   const [leverage, setLeverage] = useState(1);
@@ -168,24 +180,26 @@ export default function Home() {
 
       const candleTime = Math.floor(tickTime / 60) * 60;
       const open = parseFloat(parseFloat(newD.o).toFixed(2));
-
       const close = parseFloat(parseFloat(newD.c).toFixed(2)) - 10;
       const c2 = parseFloat(parseFloat(newD.c).toFixed(2)) + 10;
       const high = parseFloat(parseFloat(newD.h).toFixed(2));
       const low = parseFloat(parseFloat(newD.l).toFixed(2));
-      if (user?.balance?.length > 0) {
+      if (user?.Balance?.length > 0) {
         let portfolioValue = 0;
-        for (const t of user.balance) {
+        for (const t of user.Balance) {
           console.log(t);
 
           if (t.side === "CALL") {
-            portfolioValue += t.amount + (close - t.price) * t.quantity;
+            portfolioValue +=
+              Number(t.amount) + (close - Number(t.price)) * Number(t.quantity);
           } else if (t.side === "PUT") {
-            portfolioValue += t.amount + (t.price - c2) * t.quantity;
+            portfolioValue +=
+              Number(t.amount) + (Number(t.price) - c2) * Number(t.quantity);
           }
         }
-
-        const totalBalance = user.usd + portfolioValue;
+        console.log("portfolioValue : ", portfolioValue);
+        console.log("user.ud : ", user.usd);
+        const totalBalance = Number(user.usd) + portfolioValue;
 
         setBalance(() => {
           return parseFloat(totalBalance.toFixed(2));
@@ -231,7 +245,7 @@ export default function Home() {
     return () => {
       socket.close();
     };
-  }, [user?.balance, user?.usd]);
+  }, [user?.Balance, user?.usd]);
 
   useEffect(() => {
     const fetchCandle = async () => {
@@ -256,12 +270,20 @@ export default function Home() {
       setCandles(cleanData);
       setNewData(true);
     };
+
+    fetchCandle();
+  }, []);
+
+  useEffect(() => {
     const fetchBalance = async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const res = await axios.get("http://localhost:3002/balance?id=1");
+      const res = await axios.get(
+        `http://localhost:3002/balance?id=${session?.user.id}`,
+      );
+
       setUser(res.data.user);
-      const tt = res.data.user.balance.map((b) => {
+      const tt = res.data.user.Balance.map((b) => {
         return {
           ...b,
           volume: b.quantity,
@@ -275,9 +297,11 @@ export default function Home() {
       setBalance(res.data.user.usd);
     };
 
-    fetchCandle();
-    fetchBalance();
-  }, []);
+    if (status === "authenticated") {
+      setUserId(session.user.id);
+      fetchBalance();
+    }
+  }, [session, status]);
 
   useEffect(() => {
     setTrades((prev: any) => {
@@ -288,30 +312,70 @@ export default function Home() {
           type: b.side,
           close: livePriceBid,
           ask: livePriceAsk,
+          userId: userId,
         };
       });
 
       return tt;
     });
-  }, [livePriceBid, livePriceAsk]);
+  }, [livePriceBid, livePriceAsk, userId]);
 
   const buyOrder = async () => {
-    const res = await axios.post("http://localhost:3002/buy?id=1", {
-      symbol: "btcusdt",
-      leverage,
-      amount,
-    });
+    const jwtRes = await axios.get("/api/get-jwt");
+    const jwtToken = jwtRes.data.token;
+
+    if (!jwtToken) {
+      throw new Error("Not authenticated");
+    }
+    const res = await axios.post(
+      `http://localhost:3002/buy?id=${userId}`,
+      {
+        symbol: "btcusdt",
+        leverage,
+        amount,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      },
+    );
 
     console.log(res.data);
   };
+
   const sellOrder = async () => {
-    const res = await axios.post("http://localhost:3002/sell?id=1", {
-      symbol: "btcusdt",
-      amount,
-    });
+    const jwtRes = await axios.get("/api/get-jwt");
+    const jwtToken = jwtRes.data.token;
+
+    if (!jwtToken) {
+      throw new Error("Not authenticated");
+    }
+
+    const res = await axios.post(
+      `http://localhost:3002/sell?id=${userId}`,
+      {
+        symbol: "btcusdt",
+        leverage,
+        amount,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      },
+    );
 
     console.log(res.data);
   };
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (!session.user.id) {
+    return <div>no user id</div>;
+  }
 
   return (
     <div className="w-screen h-screen flex gap-4 pt-10">
@@ -353,7 +417,7 @@ export default function Home() {
 
       <div className="w-[260px]">
         <div className="text-green-400">
-          Balance : {parseFloat(balance.toFixed(2))}
+          Balance : {parseFloat(Number(balance).toFixed(2))}
         </div>
 
         <div>BTC</div>
