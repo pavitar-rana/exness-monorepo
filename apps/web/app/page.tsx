@@ -15,157 +15,11 @@ import { getCsrfToken, getSession, useSession } from "next-auth/react";
 import { CANCELLED } from "node:dns/promises";
 import { stat } from "node:fs/promises";
 import { getJwtToken } from "@/functions/get-jwt";
+import { insTable, portfolioTable } from "@/lib/types";
+import { assetCol, portfolioCOl } from "@/lib/table";
 // const initialData = [
 //   { open: 10, high: 10.63, low: 9.49, close: 9.55, time: 1642427876 },
 // ];
-
-type insTable = {
-  id: string;
-  symbol: string;
-  bidPrice: number;
-  pastBidPrice: number;
-  askPrice: number;
-  pastAskPrice: number;
-};
-type portfolioTable = {
-  id: string;
-  symbol: string;
-  price: number;
-  volume: number;
-  close: number;
-  ask: number;
-  amount: number;
-  leverage: number;
-  exposure: number;
-  quantity: number;
-  userId: string;
-  setUser: React.Dispatch<React.SetStateAction<unknown>>;
-  setTrades: React.Dispatch<React.SetStateAction<unknown>>;
-  setHistory: React.Dispatch<React.SetStateAction<unknown>>;
-  type: "CALL" | "PUT";
-};
-
-const columns: ColumnDef<insTable>[] = [
-  {
-    accessorKey: "symbol",
-    header: "Symbol",
-  },
-  {
-    accessorKey: "bidPrice",
-    header: "Bid",
-    cell: ({ row }) => {
-      const livePrice = row.original.bidPrice;
-      const pastPrice = row.original.pastBidPrice;
-      return <LivePriceComp livePrice={livePrice} pastPrice={pastPrice} />;
-    },
-  },
-  {
-    accessorKey: "askPrice",
-    header: "Ask",
-    cell: ({ row }) => {
-      const livePrice = row.original.askPrice;
-      const pastPrice = row.original.pastAskPrice;
-      return <LivePriceComp livePrice={livePrice} pastPrice={pastPrice} />;
-    },
-  },
-];
-
-const portfolioCOl: ColumnDef<portfolioTable>[] = [
-  {
-    accessorKey: "symbol",
-    header: "Symbol",
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-  },
-  {
-    accessorKey: "volume",
-    header: "Volume",
-  },
-
-  {
-    accessorKey: "price",
-    header: "Open Price",
-  },
-  {
-    accessorKey: "close",
-
-    header: "Current Price",
-  },
-
-  {
-    accessorKey: "pnl",
-    header: "P/L, USD",
-    cell: ({ row }) => {
-      const close = row.original.close;
-      const ask = row.original.ask;
-      const price = row.original.price;
-      const quantity = row.original.quantity;
-      const leverage = row.original.leverage;
-      const exposure = row.original.exposure;
-      const side = row.original.type;
-
-      let portfolioValue = 0;
-
-      if (side === "CALL") {
-        portfolioValue += (close - price) * quantity;
-      } else if (side === "PUT") {
-        portfolioValue += (price - ask) * quantity;
-      }
-
-      return <div>{portfolioValue.toFixed(2)}</div>;
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const trade = row.original;
-      const userId = row.original.userId;
-      const setTrades = row.original.setTrades;
-      const setUser = row.original.setUser;
-      const setHistory = row.original.setHistory;
-
-      return (
-        <div>
-          <Button
-            onClick={async () => {
-              const res = await axios.post(
-                `http://localhost:3002/close?id=${userId}`,
-                {
-                  trade,
-                },
-              );
-
-              setTrades((prevTrades) =>
-                prevTrades.filter((t) => t.id !== res.data.trade.id),
-              );
-
-              setHistory((prev) => {
-                return [...prev, res.data.trade];
-              });
-
-              setUser((prev) => {
-                const u = {
-                  ...prev,
-                  usd: res.data.user.usd,
-                  Balance: prev.Balance.filter(
-                    (t) => t.id !== res.data.trade.id,
-                  ),
-                };
-                return u;
-              });
-
-              console.log(res.data);
-            }}
-          >
-            Close
-          </Button>
-        </div>
-      );
-    },
-  },
-];
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -441,7 +295,7 @@ export default function Home() {
       <div className="w-[25vw] gap-5">
         <div className="text-sm mb-4">Instruments</div>
         <DataTable
-          columns={columns}
+          columns={assetCol}
           data={[
             {
               id: "btcusdt",
