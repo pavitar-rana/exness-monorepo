@@ -34,16 +34,18 @@ model VerificationToken {
 }
 
 model Trade {
-  id       String  @id @default(uuid())
-  userId   String
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  symbol   String
-  amount   Decimal
-  side     String
-  price    Decimal
-  quantity Decimal
-  leverage Decimal
-  exposure Decimal
+  id         String  @id @default(uuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol     String
+  amount     Decimal
+  side       String
+  price      Decimal
+  quantity   Decimal
+  leverage   Decimal
+  exposure   Decimal
+  stopLoss   Decimal
+  takeProfit Decimal
 
   isClosed   Boolean   @default(false)
   closedAt   DateTime?

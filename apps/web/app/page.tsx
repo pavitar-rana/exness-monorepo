@@ -21,7 +21,8 @@ export default function Home() {
   const [userId, setUserId] = useState<string>("");
   const [leverage, setLeverage] = useState<number>(1);
   const [amount, setAmount] = useState<number>(1);
-
+  const [takeProfit, setTakeProfit] = useState<number>(0);
+  const [stopLoss, setStopLoss] = useState<number>(0);
   const {
     livePriceAsk,
     pastPriceAsk,
@@ -116,6 +117,10 @@ export default function Home() {
       <div>
         <OrderForm
           {...{
+            setTakeProfit,
+            takeProfit,
+            setStopLoss,
+            stopLoss,
             setAmount,
             setType,
             setLeverage,

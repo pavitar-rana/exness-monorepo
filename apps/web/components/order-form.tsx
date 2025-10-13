@@ -18,6 +18,10 @@ const OrderForm = ({
   setUser,
   userId,
   user,
+  setTakeProfit,
+  takeProfit,
+  setStopLoss,
+  stopLoss,
 }) => {
   const buyOrder = async () => {
     const jwtRes = await axios.get("/api/get-jwt");
@@ -32,6 +36,8 @@ const OrderForm = ({
         symbol: "btcusdt",
         leverage,
         amount,
+        stopLoss,
+        takeProfit,
       },
       {
         headers: {
@@ -70,6 +76,8 @@ const OrderForm = ({
         symbol: "btcusdt",
         leverage,
         amount,
+        stopLoss,
+        takeProfit,
       },
       {
         headers: {
@@ -138,6 +146,48 @@ const OrderForm = ({
                 setAmount(1);
               } else {
                 setAmount(parseFloat(parseFloat(e.target.value).toFixed(2)));
+              }
+            }}
+          />
+        </Label>
+      </div>
+      <div>
+        <Label className="flex mt-2 flex-col items-baseline">
+          Stop Loss
+          <Input
+            type="number"
+            step={10}
+            min={0}
+            value={stopLoss}
+            onChange={(e) => {
+              if (!e.target.value) {
+                setStopLoss(0);
+              } else if (amount < e.target.value) {
+                setStopLoss(0);
+              } else {
+                setStopLoss(parseFloat(parseFloat(e.target.value).toFixed(2)));
+              }
+            }}
+          />
+        </Label>
+      </div>
+      <div>
+        <Label className="flex mt-2 flex-col items-baseline">
+          Take Profit
+          <Input
+            type="number"
+            step={10}
+            min={0}
+            value={takeProfit}
+            onChange={(e) => {
+              if (!e.target.value) {
+                setTakeProfit(0);
+              } else if (user.usd < e.target.value) {
+                setTakeProfit(1);
+              } else {
+                setTakeProfit(
+                  parseFloat(parseFloat(e.target.value).toFixed(2)),
+                );
               }
             }}
           />

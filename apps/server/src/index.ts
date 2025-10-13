@@ -67,6 +67,11 @@ app.post("/buy", verifyUser, async (req: any, res) => {
       return res.json({ message: "Insufficient balance" });
     }
 
+    let stopLoss = buyD.stopLoss;
+    if (buyD.stopLoss === 0) {
+      stopLoss = buyD.amount;
+    }
+
     const trade = await prisma.trade.create({
       data: {
         userId: user.id,
@@ -77,6 +82,8 @@ app.post("/buy", verifyUser, async (req: any, res) => {
         quantity,
         leverage: buyD.leverage,
         exposure: buyD.amount,
+        stopLoss,
+        takeProfit: buyD.takeProfit,
       },
     });
 
@@ -125,6 +132,11 @@ app.post("/sell", verifyUser, async (req: any, res) => {
       return res.json({ message: "Insufficient bala" });
     }
 
+    let stopLoss = sellD.stopLoss;
+    if (sellD.stopLoss === 0) {
+      stopLoss = sellD.amount;
+    }
+
     const trade = await prisma.trade.create({
       data: {
         userId: user.id,
@@ -135,6 +147,8 @@ app.post("/sell", verifyUser, async (req: any, res) => {
         quantity,
         exposure: exposure,
         leverage: leverage,
+        stopLoss,
+        takeProfit: sellD.takeProfit,
       },
     });
 
