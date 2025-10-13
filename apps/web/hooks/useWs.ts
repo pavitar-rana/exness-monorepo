@@ -43,6 +43,8 @@ const UseWs = ({ user }) => {
           }
         }
         const totalBalance = Number(user.usd) + portfolioValue;
+        console.log("user : ", user);
+        console.log("live Balance total: ", totalBalance);
         setBalance(parseFloat(totalBalance.toFixed(2)));
       }
 
@@ -86,7 +88,7 @@ const UseWs = ({ user }) => {
     return () => {
       socket.close();
     };
-  }, [user?.Balance, user?.usd]);
+  }, [user?.Balance, user?.usd, user]);
 
   return {
     livePriceAsk,
