@@ -9,7 +9,7 @@ import { OrderForm, upgradedUser } from "@/components/order-form";
 import { TradingHeader } from "@/components/trading-header";
 import UseWs from "@/hooks/useWs";
 import { UseInitialCandle } from "@/hooks/useInitialCandle";
-import { Trade, User } from "@repo/db";
+import { Trade } from "@repo/db";
 import { AllTradesType } from "@/lib/types";
 import {
   Card,
@@ -19,14 +19,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, BarChart3, Wallet, Activity } from "lucide-react";
+import { TrendingUp, BarChart3, Wallet, Activity, History } from "lucide-react";
 
 export default function Home() {
   const { data: session, status } = useSession();
   const [user, setUser] = useState<upgradedUser>();
   const [type, setType] = useState<"BUY" | "SELL">("BUY");
   const [newData, setNewData] = useState<boolean>(false);
-  const [, setHistory] = useState<Trade[]>([]);
+  const [history, setHistory] = useState<Trade[]>([]);
   const [trades, setTrades] = useState<AllTradesType[]>([]);
   const [userId, setUserId] = useState<string>("");
   const [leverage, setLeverage] = useState<number>(1);
@@ -125,10 +125,10 @@ export default function Home() {
 
       {/* Main Trading Interface */}
       <div className="container mx-auto p-3 sm:p-6 space-y-3">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 h-[calc(100vh-100px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
           {/* Left Sidebar - Instruments */}
-          <div className="lg:col-span-3 space-y-3 order-2 lg:order-1 h-fit">
-            <Card className="h-fit">
+          <div className="lg:col-span-3 space-y-3 order-2 lg:order-1">
+            <Card>
               <CardHeader className="pb-2 py-3">
                 <CardTitle className="flex items-center space-x-2 text-lg">
                   <BarChart3 className="h-5 w-5 text-primary" />
@@ -139,27 +139,29 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <DataTable
-                  columns={assetCol}
-                  data={[
-                    {
-                      id: "btcusdt",
-                      symbol: "btcusdt",
-                      bidPrice: livePriceBid,
-                      pastBidPrice: pastPriceBid,
-                      askPrice: livePriceAsk,
-                      pastAskPrice: pastPriceAsk,
-                    },
-                  ]}
-                />
+                <div className="border rounded-md">
+                  <DataTable
+                    columns={assetCol}
+                    data={[
+                      {
+                        id: "btcusdt",
+                        symbol: "btcusdt",
+                        bidPrice: livePriceBid,
+                        pastBidPrice: pastPriceBid,
+                        askPrice: livePriceAsk,
+                        pastAskPrice: pastPriceAsk,
+                      },
+                    ]}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Center - Chart and Portfolio */}
-          <div className="lg:col-span-6 space-y-3 order-1 lg:order-2 flex flex-col h-">
+          <div className="lg:col-span-6 space-y-3 order-1 lg:order-2">
             {/* Chart Section */}
-            <Card className="flex-1 min-h-[350px]">
+            <Card className="min-h-[400px]">
               <CardHeader className="pb-2 py-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
@@ -175,7 +177,7 @@ export default function Home() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="h-full pt-0">
+              <CardContent className="h-[350px] pt-0">
                 {candles.length > 0 && liveCandle ? (
                   <div className="w-full h-full">
                     <ChartComponent
@@ -201,8 +203,8 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Portfolio Section */}
-            <Card className="h-[180px]">
+            {/* Open Positions Section */}
+            <Card>
               <CardHeader className="pb-2 py-3">
                 <CardTitle className="flex items-center space-x-2">
                   <Wallet className="h-5 w-5 text-primary" />
@@ -213,17 +215,127 @@ export default function Home() {
                   Your active trading positions and portfolio
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-0 h-[120px]">
-                <div className="h-full overflow-y-auto">
-                  <DataTable columns={portfolioCOl} data={trades} />
+              <CardContent className="pt-0">
+                <div className="max-h-[400px] overflow-auto border rounded-md">
+                  {trades.length > 0 ? (
+                    <div className="relative">
+                      <DataTable columns={portfolioCOl} data={trades} />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-32">
+                      <div className="text-center space-y-2">
+                        <Wallet className="h-8 w-8 text-muted-foreground mx-auto" />
+                        <p className="text-sm text-muted-foreground">
+                          No open positions
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Trading History Section */}
+            <Card>
+              <CardHeader className="pb-2 py-3">
+                <CardTitle className="flex items-center space-x-2">
+                  <History className="h-5 w-5 text-primary" />
+                  <span>Trading History</span>
+                  <Badge variant="outline">{history.length}</Badge>
+                </CardTitle>
+                <CardDescription>
+                  Your completed trades and transaction history
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="max-h-[400px] overflow-auto border rounded-md">
+                  {history.length > 0 ? (
+                    <div className="relative">
+                      <DataTable
+                        columns={[
+                          {
+                            accessorKey: "symbol",
+                            header: "Symbol",
+                          },
+                          {
+                            accessorKey: "side",
+                            header: "Type",
+                          },
+                          {
+                            accessorKey: "quantity",
+                            header: "Volume",
+                            cell: ({ row }) =>
+                              Number(row.getValue("quantity")).toFixed(5),
+                          },
+                          {
+                            accessorKey: "price",
+                            header: "Entry Price",
+                            cell: ({ row }) =>
+                              Number(row.getValue("price")).toFixed(2),
+                          },
+                          {
+                            accessorKey: "closePrice",
+                            header: "Exit Price",
+                            cell: ({ row }) =>
+                              Number(row.getValue("closePrice") || 0).toFixed(
+                                2,
+                              ),
+                          },
+                          {
+                            accessorKey: "pnl",
+                            header: "P/L",
+                            cell: ({ row }) => {
+                              const pnl = Number(row.getValue("pnl") || 0);
+                              return (
+                                <span
+                                  className={
+                                    pnl >= 0 ? "text-green-600" : "text-red-600"
+                                  }
+                                >
+                                  {pnl >= 0 ? "+" : ""}
+                                  {pnl.toFixed(2)}
+                                </span>
+                              );
+                            },
+                          },
+                          {
+                            accessorKey: "closedAt",
+                            header: "Date",
+                            cell: ({ row }) => {
+                              const date = new Date(row.getValue("closedAt"));
+                              return (
+                                date.toLocaleDateString() +
+                                " " +
+                                date.toLocaleTimeString()
+                              );
+                            },
+                          },
+                        ]}
+                        data={[...history].sort(
+                          (a, b) =>
+                            new Date(b.closedAt).getTime() -
+                            new Date(a.closedAt).getTime(),
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-32">
+                      <div className="text-center space-y-2">
+                        <History className="h-8 w-8 text-muted-foreground mx-auto" />
+                        <p className="text-sm text-muted-foreground">
+                          No trading history yet
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Right Sidebar - Order Form */}
-          <div className="lg:col-span-3 order-3 h-full">
-            <Card className="h-full flex flex-col">
+          <div className="lg:col-span-3 order-3">
+            <Card className="sticky top-4">
               <CardHeader className="pb-2 py-3">
                 <CardTitle className="flex items-center space-x-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
@@ -233,7 +345,7 @@ export default function Home() {
                   Execute buy or sell orders with advanced options
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-0 flex-1 overflow-y-auto">
+              <CardContent className="pt-0">
                 <OrderForm
                   setTakeProfit={setTakeProfit}
                   takeProfit={takeProfit}

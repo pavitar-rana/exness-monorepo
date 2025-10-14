@@ -185,17 +185,15 @@ app.post("/close", async (req, res) => {
     if (!tradeToRemove) {
       return res.status(404).json({ error: "Trade not found" });
     }
-    let liq;
+    let pnl;
 
     if (trade.side == "CALL") {
-      liq =
-        Number(trade.amount) +
-        (bid - Number(trade.price)) * Number(trade.volume);
+      pnl = (bid - Number(trade.price)) * Number(trade.volume);
     } else {
-      liq =
-        Number(trade.amount) +
-        (Number(trade.price) - ask) * Number(trade.volume);
+      pnl = (Number(trade.price) - ask) * Number(trade.volume);
     }
+
+    let liq = Number(trade.amount) + pnl;
 
     const tradee = await prisma.trade.update({
       where: {
@@ -204,7 +202,7 @@ app.post("/close", async (req, res) => {
       data: {
         isClosed: true,
         closePrice: bid,
-        pnl: liq,
+        pnl: pnl,
         closedAt: new Date(),
       },
     });

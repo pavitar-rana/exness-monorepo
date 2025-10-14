@@ -27,15 +27,22 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
 
     header: "Current Price",
   },
-
+  {
+    accessorKey: "stopLoss",
+    header: "Stop Loss",
+  },
+  {
+    accessorKey: "takeProfit",
+    header: "Take Profit",
+  },
   {
     accessorKey: "pnl",
     header: "P/L, USD",
     cell: ({ row }) => {
       const close = row.original.close;
       const ask = row.original.ask;
-      const price = row.original.price;
-      const quantity = row.original.quantity;
+      const price = Number(row.original.price);
+      const quantity = Number(row.original.quantity);
       const side = row.original.type;
 
       let portfolioValue = 0;
@@ -51,6 +58,7 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
   },
   {
     id: "actions",
+    header: "Actions",
     cell: ({ row }) => {
       const trade = row.original;
       const userId = row.original.userId;
@@ -59,8 +67,10 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
       const setHistory = row.original.setHistory;
 
       return (
-        <div>
+        <div className="flex justify-end">
           <Button
+            size="sm"
+            variant="destructive"
             onClick={async () => {
               const res = await axios.post(
                 `http://localhost:3002/close?id=${userId}`,
@@ -95,6 +105,10 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
           </Button>
         </div>
       );
+    },
+    meta: {
+      className:
+        "sticky right-0 bg-background/95 backdrop-blur-sm border-l z-40",
     },
   },
 ];
