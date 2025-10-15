@@ -20,11 +20,14 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, BarChart3, Wallet, Activity, History } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const { data: session, status } = useSession();
   const [user, setUser] = useState<upgradedUser>();
   const [type, setType] = useState<"BUY" | "SELL">("BUY");
+  const [timeFrame, setTimeFrame] = useState<string>("1m");
+  const [symbol, setSymbol] = useState<string>("btcusdt");
   const [newData, setNewData] = useState<boolean>(false);
   const [history, setHistory] = useState<Trade[]>([]);
   const [trades, setTrades] = useState<AllTradesType[]>([]);
@@ -56,6 +59,8 @@ export default function Home() {
     setBalance,
     session,
     status,
+    symbol,
+    timeFrame,
   });
 
   useEffect(() => {
@@ -94,6 +99,7 @@ export default function Home() {
       </div>
     );
   }
+  const timeFrameOptions = ["1m", "5m", "10m", "30m"];
 
   if (!session?.user?.id) {
     return (
@@ -167,14 +173,30 @@ export default function Home() {
                   <CardTitle className="flex items-center space-x-2">
                     <Activity className="h-5 w-5 text-primary" />
                     <span>BTC/USDT Chart</span>
+                    <Badge
+                      variant="outline"
+                      className="flex items-center space-x-1"
+                    >
+                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Live</span>
+                    </Badge>
                   </CardTitle>
-                  <Badge
-                    variant="outline"
-                    className="flex items-center space-x-1"
-                  >
-                    <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                    <span>Live</span>
-                  </Badge>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {timeFrameOptions.map((tf) => (
+                      <button
+                        key={tf}
+                        className={cn(
+                          "p-1 sm:p-2 rounded-lg border-2 transition-all duration-200 hover:scale-[1.05] font-semibold text-sm sm:text-base",
+                          timeFrame === tf
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border hover:border-primary/50",
+                        )}
+                        onClick={() => setTimeFrame(tf)}
+                      >
+                        {tf}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="h-[350px] pt-0">

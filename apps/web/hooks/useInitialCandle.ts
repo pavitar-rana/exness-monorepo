@@ -11,10 +11,14 @@ export const UseInitialCandle = ({
   setBalance,
   session,
   status,
+  timeFrame,
+  symbol,
 }) => {
   useEffect(() => {
     const fetchCandle = async () => {
-      const res = await axios.get("/api/get-candles?symbol=btcusdt");
+      const res = await axios.get(
+        `/api/get-candles?symbol=${symbol}&&tf=${timeFrame}`,
+      );
       const data = res.data.data;
 
       const candleCleaner = (data: Record<string, string>) => {
@@ -29,7 +33,6 @@ export const UseInitialCandle = ({
       };
 
       const cleanData = data.map(candleCleaner);
-      const time: number = cleanData[cleanData.length - 1].time;
 
       setCandles(cleanData);
       setNewData(true);
@@ -74,5 +77,7 @@ export const UseInitialCandle = ({
     setUser,
     setUserId,
     status,
+    symbol,
+    timeFrame,
   ]);
 };
