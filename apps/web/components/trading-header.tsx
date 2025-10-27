@@ -10,6 +10,7 @@ import {
   User,
   Settings,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 interface TradingHeaderProps {
   balance: number;
@@ -133,7 +134,14 @@ export const TradingHeader: React.FC<TradingHeaderProps> = ({
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Settings className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button
+                onClick={() => {
+                  signOut();
+                }}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+              >
                 <User className="h-4 w-4" />
               </Button>
             </div>

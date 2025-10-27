@@ -15,12 +15,15 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, BarChart3, Wallet, Activity, History } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -131,6 +134,11 @@ export default function Home() {
               Please sign in to access the trading platform
             </CardDescription>
           </CardHeader>
+          <CardFooter className="flex justify-center">
+            <Button variant="ghost" asChild>
+              <Link href={"/sign-in"}>SignIn</Link>
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     );
