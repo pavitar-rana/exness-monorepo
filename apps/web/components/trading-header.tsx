@@ -17,6 +17,7 @@ interface TradingHeaderProps {
   livePriceBid: number;
   pastPriceAsk: number;
   pastPriceBid: number;
+  symbol: string;
 }
 
 export const TradingHeader: React.FC<TradingHeaderProps> = ({
@@ -25,6 +26,7 @@ export const TradingHeader: React.FC<TradingHeaderProps> = ({
   livePriceBid,
   pastPriceAsk,
   pastPriceBid,
+  symbol,
 }) => {
   const askChange = livePriceAsk - pastPriceAsk;
   const bidChange = livePriceBid - pastPriceBid;
@@ -81,7 +83,7 @@ export const TradingHeader: React.FC<TradingHeaderProps> = ({
             {/* BTC/USDT Price */}
             <div className="hidden md:flex items-center space-x-3">
               <div className="text-center">
-                <p className="text-xs text-muted-foreground">BTC/USDT</p>
+                <p className="text-xs text-muted-foreground">{symbol}</p>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-semibold">
                     {formatPrice(livePriceAsk)}

@@ -18,7 +18,7 @@ import {
 import { AllTradesType } from "@/lib/types";
 import { Trade, User } from "@repo/db";
 
-interface OrderFormProps {
+type OrderFormProps = {
   setAmount: (amount: number) => void;
   setType: (type: "BUY" | "SELL") => void;
   setLeverage: (leverage: number) => void;
@@ -36,7 +36,8 @@ interface OrderFormProps {
   takeProfit: number;
   setStopLoss: (stopLoss: number) => void;
   stopLoss: number;
-}
+  symbol: string;
+};
 
 export type upgradedUser = User & {
   Balance: Trade[];
@@ -47,6 +48,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   setType,
   setLeverage,
   balance,
+  symbol,
   livePriceAsk,
   type,
   livePriceBid,
@@ -93,7 +95,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       const res = await axios.post(
         `http://localhost:3002/buy?id=${userId}`,
         {
-          symbol: "btcusdt",
+          symbol,
           leverage,
           amount,
           stopLoss,
@@ -141,7 +143,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       const res = await axios.post(
         `http://localhost:3002/sell?id=${userId}`,
         {
-          symbol: "btcusdt",
+          symbol,
           leverage,
           amount,
           stopLoss,
@@ -332,7 +334,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
               Estimated Position Size:
             </span>
             <span className="font-medium">
-              ₿{calculateEstimatedValue().toFixed(6)}
+              {calculateEstimatedValue().toFixed(6)} {symbol.slice(0, 3)}
             </span>
           </div>
           <div className="flex justify-between">
@@ -379,7 +381,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
               <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5" />
             )}
             <span className="hidden sm:inline">
-              {type === "BUY" ? "Buy" : "Sell"} BTC/USDT
+              {type === "BUY" ? "Buy" : "Sell"} {symbol}
             </span>
             <span className="sm:hidden">{type === "BUY" ? "Buy" : "Sell"}</span>
           </div>

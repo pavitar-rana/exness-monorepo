@@ -8,6 +8,7 @@ export type insTable = {
   pastBidPrice: number;
   askPrice: number;
   pastAskPrice: number;
+  setSymbol: React.Dispatch<React.SetStateAction<string>>;
 };
 
 export type portfolioTable = {

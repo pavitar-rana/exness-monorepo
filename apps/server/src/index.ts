@@ -11,8 +11,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-let bid = 0;
-let ask = 0;
+const liveAssetPrice = {};
+
 const redis = createClient();
 await redis.connect();
 
@@ -24,8 +24,16 @@ socket.onopen = () => {
 
 socket.onmessage = (event) => {
   const data = JSON.parse(event.data);
-  bid = data.price.bid;
-  ask = data.price.ask;
+  const bid = data.price.bid;
+  const ask = data.price.ask;
+  const symbol = data.symbol;
+
+  if (!liveAssetPrice[symbol]) {
+    liveAssetPrice[symbol] = {};
+  }
+
+  liveAssetPrice[symbol].bid = bid;
+  liveAssetPrice[data.symbol].ask = ask;
 };
 // server/index.ts
 const verifyUser = async (req, res, next) => {
@@ -41,7 +49,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/buy", verifyUser, async (req: any, res) => {
-  if (ask !== 0 || bid !== 0) {
+  if (liveAssetPrice) {
     const buyD = req.body;
 
     if (!req.user) {
@@ -58,10 +66,12 @@ app.post("/buy", verifyUser, async (req: any, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    let currAskPrice = liveAssetPrice[buyD.symbol].ask;
     const collateral = buyD.amount;
     const leverage = buyD.leverage;
     const exposure = parseFloat((collateral * leverage).toFixed(2));
-    const quantity = parseFloat((exposure / ask).toFixed(5));
+
+    const quantity = parseFloat((exposure / currAskPrice).toFixed(5));
 
     if (user.usd < buyD.amount) {
       return res.json({ message: "Insufficient balance" });
@@ -78,7 +88,7 @@ app.post("/buy", verifyUser, async (req: any, res) => {
         symbol: buyD.symbol,
         amount: buyD.amount,
         side: "CALL",
-        price: ask,
+        price: currAskPrice,
         quantity,
         leverage: buyD.leverage,
         exposure: buyD.amount,
@@ -86,11 +96,17 @@ app.post("/buy", verifyUser, async (req: any, res) => {
         takeProfit: buyD.takeProfit,
       },
     });
+    console.log("buyD.amount : ", buyD.amount);
+    console.log("user.usd : ", user.usd);
+
+    const updateUsd = Number(user.usd) - parseFloat(buyD.amount);
 
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
-      data: { usd: Number(user.usd) - buyD.amount },
+      data: { usd: updateUsd },
     });
+
+    console.log("updated user : ", updatedUser);
 
     await redis.publish("user:activeTrades", JSON.stringify(trade));
 
@@ -104,7 +120,7 @@ app.post("/buy", verifyUser, async (req: any, res) => {
 });
 
 app.post("/sell", verifyUser, async (req: any, res) => {
-  if (ask !== 0 || bid !== 0) {
+  if (liveAssetPrice) {
     const sellD = req.body;
 
     console.log("selld : ", sellD);
@@ -123,10 +139,11 @@ app.post("/sell", verifyUser, async (req: any, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    let currAskPrice = liveAssetPrice[sellD.symbol].ask;
     const collateral = sellD.amount;
     const leverage = sellD.leverage;
     const exposure = parseFloat((collateral * leverage).toFixed(2));
-    const quantity = parseFloat((exposure / ask).toFixed(5));
+    const quantity = parseFloat((exposure / currAskPrice).toFixed(5));
 
     if (Number(user.usd) < sellD.amount) {
       return res.json({ message: "Insufficient bala" });
@@ -143,7 +160,7 @@ app.post("/sell", verifyUser, async (req: any, res) => {
         amount: sellD.amount,
         symbol: sellD.symbol,
         side: "PUT",
-        price: ask,
+        price: currAskPrice,
         quantity,
         exposure: exposure,
         leverage: leverage,
@@ -163,7 +180,7 @@ app.post("/sell", verifyUser, async (req: any, res) => {
 });
 
 app.post("/close", async (req, res) => {
-  if (ask !== 0 || bid !== 0) {
+  if (liveAssetPrice) {
     const { id } = req.query;
     const { trade } = req.body;
     const user = await prisma.user.findUnique({
@@ -187,13 +204,21 @@ app.post("/close", async (req, res) => {
     }
     let pnl;
 
+    const currBidPrice = liveAssetPrice[trade.symbol].bid;
+    const currAskPrice = liveAssetPrice[trade.symbol].ask;
+
     if (trade.side == "CALL") {
-      pnl = (bid - Number(trade.price)) * Number(trade.volume);
+      pnl = (currBidPrice - Number(trade.price)) * Number(trade.volume);
     } else {
-      pnl = (Number(trade.price) - ask) * Number(trade.volume);
+      pnl = (Number(trade.price) - currAskPrice) * Number(trade.volume);
     }
 
     let liq = Number(trade.amount) + pnl;
+
+    console.log("pnl : ", pnl);
+    console.log("currAskPrice : ", currAskPrice);
+    console.log("currBidPrice : ", currBidPrice);
+    console.log("liq : ", liq);
 
     const tradee = await prisma.trade.update({
       where: {
@@ -201,7 +226,7 @@ app.post("/close", async (req, res) => {
       },
       data: {
         isClosed: true,
-        closePrice: bid,
+        closePrice: currBidPrice,
         pnl: pnl,
         closedAt: new Date(),
       },
@@ -209,6 +234,9 @@ app.post("/close", async (req, res) => {
 
     const usdToUpdate =
       parseFloat(user.usd.toFixed(2)) + parseFloat(liq.toFixed(2));
+
+    console.log("user.usd.toFixed(2) : ", user.usd.toFixed(2));
+    console.log("usdToUpdate : ", liq.toFixed(2));
 
     const updatedUser = await prisma.user.update({
       where: {

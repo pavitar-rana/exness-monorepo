@@ -1,4 +1,5 @@
 import axios from "axios";
+import { time } from "node:console";
 import { useEffect } from "react";
 
 export const UseInitialCandle = ({
@@ -13,6 +14,7 @@ export const UseInitialCandle = ({
   status,
   timeFrame,
   symbol,
+  liveAssetPrice,
 }) => {
   useEffect(() => {
     const fetchCandle = async () => {

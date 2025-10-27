@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChartComponent } from "@/components/candle-chart/chart";
 import { DataTable } from "@/components/instrument-table";
 import { assetCol, portfolioCOl } from "@/lib/table";
@@ -27,7 +27,7 @@ export default function Home() {
   const [user, setUser] = useState<upgradedUser>();
   const [type, setType] = useState<"BUY" | "SELL">("BUY");
   const [timeFrame, setTimeFrame] = useState<string>("1m");
-  const [symbol, setSymbol] = useState<string>("btcusdt");
+  const [symbol, setSymbol] = useState<string>("BTCUSDT");
   const [newData, setNewData] = useState<boolean>(false);
   const [history, setHistory] = useState<Trade[]>([]);
   const [trades, setTrades] = useState<AllTradesType[]>([]);
@@ -36,18 +36,34 @@ export default function Home() {
   const [amount, setAmount] = useState<number>(1);
   const [takeProfit, setTakeProfit] = useState<number>(0);
   const [stopLoss, setStopLoss] = useState<number>(0);
+  const [liveAssetPrice, setLiveAssetPrice] = useState({});
+  const [assetTableDataLive, setAssetTableDataLive] = useState([]);
+  const [isReady, setIsReady] = useState(false);
+  const liveAssetPriceRef = useRef({});
 
   const {
     livePriceAsk,
     pastPriceAsk,
     livePriceBid,
     pastPriceBid,
+
     liveCandle,
     balance,
     setBalance,
     candles,
     setCandles,
-  } = UseWs({ user });
+  } = UseWs({
+    user,
+    symbol,
+    liveAssetPrice,
+    setLiveAssetPrice,
+    assetTableDataLive,
+    setAssetTableDataLive,
+    setSymbol,
+    isReady,
+    setIsReady,
+    liveAssetPriceRef,
+  });
 
   UseInitialCandle({
     setCandles,
@@ -61,6 +77,7 @@ export default function Home() {
     status,
     symbol,
     timeFrame,
+    liveAssetPrice,
   });
 
   useEffect(() => {
@@ -84,7 +101,7 @@ export default function Home() {
     });
   }, [livePriceBid, livePriceAsk, userId]);
 
-  if (status === "loading") {
+  if (status === "loading" || !isReady) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -127,6 +144,7 @@ export default function Home() {
         livePriceBid={livePriceBid}
         pastPriceAsk={pastPriceAsk}
         pastPriceBid={pastPriceBid}
+        symbol={symbol}
       />
 
       {/* Main Trading Interface */}
@@ -146,19 +164,20 @@ export default function Home() {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="border rounded-md">
-                  <DataTable
+                  <DataTable columns={assetCol} data={assetTableDataLive} />
+                  {/*<DataTable
                     columns={assetCol}
                     data={[
                       {
-                        id: "btcusdt",
-                        symbol: "btcusdt",
+                        id: "BTCUSDT",
+                        symbol: "BTCUSDT",
                         bidPrice: livePriceBid,
                         pastBidPrice: pastPriceBid,
                         askPrice: livePriceAsk,
                         pastAskPrice: pastPriceAsk,
                       },
                     ]}
-                  />
+                  />*/}
                 </div>
               </CardContent>
             </Card>
@@ -172,7 +191,7 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
                     <Activity className="h-5 w-5 text-primary" />
-                    <span>BTC/USDT Chart</span>
+                    <span>{symbol} Chart</span>
                     <Badge
                       variant="outline"
                       className="flex items-center space-x-1"
@@ -386,6 +405,7 @@ export default function Home() {
                   setUser={setUser}
                   userId={userId}
                   user={user!}
+                  symbol={symbol}
                 />
               </CardContent>
             </Card>

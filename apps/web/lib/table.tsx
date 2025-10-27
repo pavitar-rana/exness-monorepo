@@ -117,6 +117,20 @@ const assetCol: ColumnDef<insTable>[] = [
   {
     accessorKey: "symbol",
     header: "Symbol",
+    cell: ({ row }) => {
+      const setSymbol = row.original.setSymbol;
+      const symbol = row.original.symbol;
+      return (
+        <div
+          className="cursor-pointer"
+          onClick={() => {
+            setSymbol(symbol);
+          }}
+        >
+          {symbol}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "bidPrice",

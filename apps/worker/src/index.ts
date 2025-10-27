@@ -16,12 +16,12 @@ const connection = new IORedis.Redis({ maxRetriesPerRequest: null });
 const worker = new Worker(
   "pricePooler",
   async (job) => {
-    console.log(job.data);
     try {
-      await client.query(`
-        INSERT INTO metrics.assetPrice ("time", symbol, price)
-        VALUES (NOW(), 'btcusdt', ${(parseFloat(job.data) - 10).toString()})
-        `);
+      await client.query(
+        `INSERT INTO metrics.assetPrice ("time", symbol, price)
+         VALUES (NOW(), $1, $2)`,
+        [job.data.symbol, parseFloat(job.data.price.bid)],
+      );
     } catch (e) {
       console.error("error", e);
     }
