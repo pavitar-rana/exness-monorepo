@@ -33,6 +33,7 @@ const UseWs = ({
 
     socket.onmessage = (data) => {
       const d = JSON.parse(data.data);
+
       const newD = d.k;
       const price = d.price;
       const symb = d.symbol;
