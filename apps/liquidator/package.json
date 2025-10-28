@@ -4,14 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec ts-node-esm src/index.ts"
+    "build": "tsc",
+    "dev": "tsc -b && node dist/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@repo/db": "*",
     "redis": "^5.8.3",
-    "ts-node": "^10.9.2",
-    "@repo/db": "*"
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

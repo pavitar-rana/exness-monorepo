@@ -1,5 +1,5 @@
 import WebScocket, { WebSocketServer } from "ws";
-import { createClient } from "@redis/client";
+import { createClient } from "redis";
 
 import express from "express";
 
@@ -14,13 +14,17 @@ wss.on("connection", (ws) => {
   console.log("Frontend connected");
 });
 
-const redis = createClient();
-await redis.connect();
+async function main() {
+  const redis = createClient();
+  await redis.connect();
 
-await redis.subscribe("binance:livePrice", (message) => {
-  for (const client of wss.clients) {
-    if (client.readyState === 1) {
-      client.send(message);
+  await redis.subscribe("binance:livePrice", (message) => {
+    for (const client of wss.clients) {
+      if (client.readyState === 1) {
+        client.send(message);
+      }
     }
-  }
-});
+  });
+}
+
+main().catch(console.error);

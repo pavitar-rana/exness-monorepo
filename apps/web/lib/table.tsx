@@ -16,6 +16,9 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
   {
     accessorKey: "volume",
     header: "Volume",
+    cell: ({ row }) => {
+      return <div>{parseFloat(String(row.original.volume)).toFixed(5)}</div>;
+    },
   },
 
   {

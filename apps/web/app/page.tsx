@@ -49,7 +49,6 @@ export default function Home() {
     pastPriceAsk,
     livePriceBid,
     pastPriceBid,
-
     liveCandle,
     balance,
     setBalance,
@@ -91,8 +90,8 @@ export default function Home() {
           volume: b.quantity,
           price: b.price,
           type: b.side,
-          close: livePriceBid,
-          ask: livePriceAsk,
+          close: Number(liveAssetPriceRef.current[b.symbol].bid),
+          ask: Number(liveAssetPriceRef.current[b.symbol].ask),
           userId: userId,
           setTrades,
           setUser,
@@ -102,7 +101,7 @@ export default function Home() {
 
       return tt;
     });
-  }, [livePriceBid, livePriceAsk, userId]);
+  }, [userId, liveAssetPriceRef, livePriceBid, livePriceAsk]);
 
   if (status === "loading" || !isReady) {
     return (

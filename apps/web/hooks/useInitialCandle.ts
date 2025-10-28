@@ -1,5 +1,4 @@
 import axios from "axios";
-import { time } from "node:console";
 import { useEffect } from "react";
 
 export const UseInitialCandle = ({
@@ -59,9 +58,7 @@ export const UseInitialCandle = ({
 
       setHistory(res.data.history);
 
-      console.log("tt", tt);
       setTrades(tt);
-      console.log("usder", res.data.user);
       setBalance(res.data.user.usd);
     };
 
