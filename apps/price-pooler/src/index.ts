@@ -22,8 +22,8 @@ async function main() {
       k: data.data.k,
       symbol: data.data.k.s,
       price: {
-        bid: parseFloat((parseFloat(data.data.k.c) - 10).toFixed()),
-        ask: parseFloat((parseFloat(data.data.k.c) + 10).toFixed()),
+        bid: parseFloat((parseFloat(data.data.k.c) - 10).toFixed(2)),
+        ask: parseFloat((parseFloat(data.data.k.c) + 10).toFixed(2)),
       },
     };
 
