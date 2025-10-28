@@ -18,6 +18,7 @@ timescaledb.hypertable,
 timescaledb.partition_column = 'time',
 timescaledb.segmentby = symbol,
 timescaledb.chunk_interval='1 day'
+
 )
 `);
 
