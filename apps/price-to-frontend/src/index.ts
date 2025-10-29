@@ -21,7 +21,6 @@ async function main() {
   await redis.subscribe("binance:livePrice", (message) => {
     for (const client of wss.clients) {
       if (client.readyState === 1) {
-        console.log("sending to client : ", message);
         client.send(message);
       }
     }

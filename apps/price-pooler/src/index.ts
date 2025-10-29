@@ -27,8 +27,6 @@ async function main() {
       },
     };
 
-    console.log("sendD : ", sendD);
-
     await redis.publish("binance:livePrice", JSON.stringify(sendD));
     await myQueue.add("priceToDB", sendD, { removeOnComplete: true });
   };
