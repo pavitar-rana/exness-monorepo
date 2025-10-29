@@ -25,7 +25,8 @@ const UseWs = ({
   const closeRef = useRef(0);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:3001");
+    // const socket = new WebSocket("ws://localhost:3001");
+    const socket = new WebSocket("ws://34.14.140.243:3001");
 
     socket.onopen = () => {
       console.log("Socket connected");

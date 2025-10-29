@@ -43,8 +43,12 @@ export const UseInitialCandle = ({
     const fetchBalance = async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      // const res = await axios.get(
+      //   `http://localhost:3002/balance?id=${session?.user.id}`,
+      // );
+
       const res = await axios.get(
-        `http://localhost:3002/balance?id=${session?.user.id}`,
+        `http://34.14.140.243:3002/balance?id=${session?.user.id}`,
       );
 
       setUser(res.data.user);
