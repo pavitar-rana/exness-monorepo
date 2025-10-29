@@ -48,7 +48,6 @@ export default function Home() {
     livePriceAsk,
     pastPriceAsk,
     livePriceBid,
-    pastPriceBid,
     liveCandle,
     balance,
     setBalance,
@@ -150,7 +149,6 @@ export default function Home() {
         livePriceAsk={livePriceAsk}
         livePriceBid={livePriceBid}
         pastPriceAsk={pastPriceAsk}
-        pastPriceBid={pastPriceBid}
         symbol={symbol}
       />
 
@@ -402,7 +400,6 @@ export default function Home() {
                   setAmount={setAmount}
                   setType={setType}
                   setLeverage={setLeverage}
-                  balance={balance}
                   livePriceAsk={livePriceAsk}
                   type={type}
                   livePriceBid={livePriceBid}

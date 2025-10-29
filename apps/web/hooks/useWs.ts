@@ -26,7 +26,9 @@ const UseWs = ({
 
   useEffect(() => {
     // const socket = new WebSocket("ws://localhost:3001");
-    const socket = new WebSocket("ws://34.14.140.243:3001");
+    const socket = new WebSocket(
+      `ws://${process.env.NEXT_PUBLIC_BASE_URL}:3001`,
+    );
 
     socket.onopen = () => {
       console.log("Socket connected");

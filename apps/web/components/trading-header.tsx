@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -17,7 +16,6 @@ interface TradingHeaderProps {
   livePriceAsk: number;
   livePriceBid: number;
   pastPriceAsk: number;
-  pastPriceBid: number;
   symbol: string;
 }
 
@@ -26,13 +24,12 @@ export const TradingHeader: React.FC<TradingHeaderProps> = ({
   livePriceAsk,
   livePriceBid,
   pastPriceAsk,
-  pastPriceBid,
   symbol,
 }) => {
   const askChange = livePriceAsk - pastPriceAsk;
-  const bidChange = livePriceBid - pastPriceBid;
+  // const bidChange = livePriceBid - pastPriceBid;
   const askChangePercent = pastPriceAsk ? (askChange / pastPriceAsk) * 100 : 0;
-  const bidChangePercent = pastPriceBid ? (bidChange / pastPriceBid) * 100 : 0;
+  // const bidChangePercent = pastPriceBid ? (bidChange / pastPriceBid) * 100 : 0;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-US", {

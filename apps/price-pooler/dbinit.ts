@@ -40,7 +40,7 @@ for (const candle of candleTabls) {
        MAX(price) AS high,
        MIN(price) AS low,
        last(price, time) as close
-    FROM assetPrice
+    FROM metrics.assetPrice
     GROUP BY bucket, symbol;
   `);
 }

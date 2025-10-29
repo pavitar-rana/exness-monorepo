@@ -76,7 +76,7 @@ const portfolioCOl: ColumnDef<portfolioTable>[] = [
             variant="destructive"
             onClick={async () => {
               const res = await axios.post(
-                `http://34.14.140.243:3002/close?id=${userId}`,
+                `http://${process.env.NEXT_PUBLIC_BASE_URL}:3002/close?id=${userId}`,
                 {
                   trade,
                 },

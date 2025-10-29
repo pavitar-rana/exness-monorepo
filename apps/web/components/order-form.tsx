@@ -4,17 +4,8 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
-import { Separator } from "./ui/separator";
 import axios from "axios";
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Shield,
-  Target,
-  Zap,
-  Calculator,
-} from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { AllTradesType } from "@/lib/types";
 import { Trade, User } from "@repo/db";
 
@@ -22,7 +13,6 @@ type OrderFormProps = {
   setAmount: (amount: number) => void;
   setType: (type: "BUY" | "SELL") => void;
   setLeverage: (leverage: number) => void;
-  balance: number;
   livePriceAsk: number;
   type: "BUY" | "SELL";
   livePriceBid: number;
@@ -47,7 +37,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
   setAmount,
   setType,
   setLeverage,
-  balance,
   symbol,
   livePriceAsk,
   type,
@@ -93,7 +82,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       }
 
       const res = await axios.post(
-        `http://34.14.140.243:3002/buy?id=${userId}`,
+        `http://${process.env.NEXT_PUBLIC_BASE_URL}:3002/buy?id=${userId}`,
         {
           symbol,
           leverage,
@@ -141,7 +130,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       }
 
       const res = await axios.post(
-        `http://34.14.140.243:3002/sell?id=${userId}`,
+        `http://${process.env.NEXT_PUBLIC_BASE_URL}:3002/sell?id=${userId}`,
         {
           symbol,
           leverage,

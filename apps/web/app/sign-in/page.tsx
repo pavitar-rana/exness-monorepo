@@ -108,7 +108,7 @@ const SignIn = () => {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    We'll send you a magic link to sign in securely
+                    We{"'"}ll send you a magic link to sign in securely
                   </p>
                 </div>
 

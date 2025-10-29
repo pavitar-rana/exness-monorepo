@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ token });
   } catch (err) {
+    console.error(err);
     return NextResponse.json({ error: "Failed to get token" }, { status: 500 });
   }
 }
