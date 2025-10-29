@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { prisma } from "@repo/db";
+// import { prisma } from "../../../packages/db/src/client.ts";
 
 import { getToken } from "next-auth/jwt";
 import { createClient } from "redis";
@@ -294,7 +295,7 @@ async function main() {
     }
   });
 
-  app.listen(3002, () => {
+  app.listen(3002, "0.0.0.0", () => {
     console.log("Server started");
   });
 }

@@ -3,7 +3,7 @@
   "type": "module",
   "main": "dist/index.js",
   ".": {
-    "import": "./src/index.js"
+    "import": "./src/index.ts"
   },
   "version": "1.0.0",
   "description": "",
