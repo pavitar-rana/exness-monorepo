@@ -258,32 +258,40 @@ async function main() {
 
   app.get("/balance", async (req, res) => {
     const { id } = req.query;
+    try {
+      console.log("fetching for id : ", id);
+      const user = await prisma.user.findUnique({
+        where: {
+          id: (id as string) || "",
+        },
+        include: {
+          Balance: true,
+        },
+      });
 
-    console.log("fetching for id : ", id);
-    const user = await prisma.user.findUnique({
-      where: {
-        id: (id as string) || "",
-      },
-      include: {
-        Balance: true,
-      },
-    });
+      if (!user) {
+        return res.json(404).json({ error: "user not found" });
+      }
 
-    if (!user) {
-      return res.json(404).json({ error: "user not found" });
+      const history = (user.Balance || []).filter((t) => t.isClosed === true);
+      const openTrades = (user.Balance || []).filter(
+        (t) => t.isClosed === false,
+      );
+
+      return res.json({
+        message: "Found user",
+        user: {
+          ...user,
+          Balance: openTrades,
+        },
+        history,
+      });
+    } catch (e) {
+      console.error("error getting balance : ", e);
+      res.json({
+        message: "cant get balance ",
+      });
     }
-
-    const history = (user.Balance || []).filter((t) => t.isClosed === true);
-    const openTrades = (user.Balance || []).filter((t) => t.isClosed === false);
-
-    return res.json({
-      message: "Found user",
-      user: {
-        ...user,
-        Balance: openTrades,
-      },
-      history,
-    });
   });
 
   app.listen(3002, () => {
