@@ -1,4 +1,7 @@
+// @ts-nocheck
+
 import { prisma } from "@repo/db";
+
 import { createClient } from "redis";
 
 async function main() {

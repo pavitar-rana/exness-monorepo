@@ -1,9 +1,10 @@
 {
   "name": "@repo/db",
   "type": "module",
-  "main": "dist/index.js",
-  ".": {
-    "import": "./dist/index.js"
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    }
   },
   "version": "1.0.0",
   "description": "",
