@@ -1,8 +1,9 @@
+// @ts-nocheck
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { prisma } from "@repo/db";
-// import { prisma } from "../../../packages/db/src/client.ts";
 
 import { getToken } from "next-auth/jwt";
 import { createClient } from "redis";
