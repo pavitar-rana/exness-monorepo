@@ -273,9 +273,8 @@ async function main() {
       return res.json(404).json({ error: "user not found" });
     }
 
-    const history = user?.Balance.filter((t) => t.isClosed === true);
-
-    const openTrades = user.Balance.filter((t) => t.isClosed === false);
+    const history = (user.Balance || []).filter((t) => t.isClosed === true);
+    const openTrades = (user.Balance || []).filter((t) => t.isClosed === false);
 
     return res.json({
       message: "Found user",
