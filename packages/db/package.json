@@ -2,8 +2,8 @@
   "name": "@repo/db",
   "type": "module",
   "main": "dist/index.js",
-  "exports": {
-    ".": "./dist/index.js"
+  ".": {
+    "import": "./src/index.js"
   },
   "version": "1.0.0",
   "description": "",
