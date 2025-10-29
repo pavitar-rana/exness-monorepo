@@ -1,5 +1,5 @@
 import { Trade, User } from "@repo/db";
-import { Decimal } from "@repo/db/generated/prisma/runtime/library";
+import { Decimal } from "@repo/db/generated/client/runtime/library";
 
 export type insTable = {
   id: string;
