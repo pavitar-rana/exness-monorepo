@@ -93,7 +93,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       }
 
       const res = await axios.post(
-        `http://localhost:3002/buy?id=${userId}`,
+        `http://34.14.140.243:3002/buy?id=${userId}`,
         {
           symbol,
           leverage,
@@ -141,7 +141,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       }
 
       const res = await axios.post(
-        `http://localhost:3002/sell?id=${userId}`,
+        `http://34.14.140.243:3002/sell?id=${userId}`,
         {
           symbol,
           leverage,
