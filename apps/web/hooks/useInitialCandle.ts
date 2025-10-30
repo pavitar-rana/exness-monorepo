@@ -48,7 +48,7 @@ export const UseInitialCandle = ({
       // );
 
       const res = await axios.get(
-        `http://${process.env.NEXT_PUBLIC_BASE_URL}:3002/balance?id=${session?.user.id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/v1/api/balance?id=${session?.user.id}`,
       );
 
       setUser(res.data.user);

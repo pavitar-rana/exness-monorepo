@@ -2,13 +2,11 @@
   "name": "exness-project",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "build": "npm run build --workspaces",
+    "start": "concurrently -n \"server,liquidator,web,price-pooler,price-to-frontend,worker\" -c \"green,blue,magenta,yellow,cyan,red\"        \"npm run start --workspace=server\"        \"npm run start --workspace=liquidator\"        \"npm run start --workspace=web\"        \"npm run start --workspace=price-pooler\"        \"npm run start --workspace=price-to-frontend\"        \"npm run start --workspace=add-price-to-db\""
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "prettier": "^3.6.2",
     "turbo": "^2.5.8",
     "typescript": "5.9.2"

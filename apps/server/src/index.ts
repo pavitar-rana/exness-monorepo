@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { prisma } from "@repo/db";
 
-import { getToken } from "next-auth/jwt";
+import jwt from "jsonwebtoken";
 import { createClient } from "redis";
 import path from "path";
 
@@ -40,13 +40,25 @@ async function main() {
     liveAssetPrice[symbol].bid = bid;
     liveAssetPrice[data.symbol].ask = ask;
   };
-  // server/index.ts
-  const verifyUser = async (req, res, next) => {
-    const token = await getToken({ req, secret: process.env.AUTH_SECRET });
-    if (!token) return res.status(401).json({ error: "Not authenticated" });
 
-    req.user = token;
-    next();
+  const verifyUser = async (req, res, next) => {
+    try {
+      const authHeader = req.headers.authorization;
+
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const token = authHeader.substring(7);
+
+      const decoded = jwt.verify(token, process.env.AUTH_SECRET!);
+
+      req.user = decoded;
+      next();
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      return res.status(401).json({ error: "Invalid or expired token" });
+    }
   };
 
   app.get("/", (req, res) => {
@@ -262,7 +274,6 @@ async function main() {
     const { id } = req.query;
     try {
       console.log("fetching for id : ", id);
-      console.log("Resolved prisma in balance route =", prisma);
 
       const user = await prisma.user.findUnique({
         where: {

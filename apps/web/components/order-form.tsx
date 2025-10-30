@@ -82,7 +82,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       }
 
       const res = await axios.post(
-        `http://${process.env.NEXT_PUBLIC_BASE_URL}:3002/buy?id=${userId}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/v1/api/buy`,
         {
           symbol,
           leverage,
@@ -130,7 +130,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       }
 
       const res = await axios.post(
-        `http://${process.env.NEXT_PUBLIC_BASE_URL}:3002/sell?id=${userId}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/v1/api/sell`,
         {
           symbol,
           leverage,
