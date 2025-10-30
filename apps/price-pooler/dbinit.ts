@@ -23,10 +23,10 @@ timescaledb.chunk_interval='1 day'
 `);
 
 const candleTabls: { name: string; chunkTime: string }[] = [
-  { name: "assetPrice_1m", chunkTime: "1 minute" },
-  { name: "assetPrice_5m", chunkTime: "5 minutes" },
-  { name: "assetPrice_10m", chunkTime: "10 minutes" },
-  { name: "assetPrice_30m", chunkTime: "30 minutes" },
+  { name: "metrics.assetPrice_1m", chunkTime: "1 minute" },
+  { name: "metrics.assetPrice_5m", chunkTime: "5 minutes" },
+  { name: "metrics.assetPrice_10m", chunkTime: "10 minutes" },
+  { name: "metrics.assetPrice_30m", chunkTime: "30 minutes" },
 ];
 
 for (const candle of candleTabls) {
