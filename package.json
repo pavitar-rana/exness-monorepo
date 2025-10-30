@@ -2,7 +2,8 @@
   "name": "exness-project",
   "private": true,
   "scripts": {
-    "build": "npm run build --workspaces",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
     "start": "concurrently -n \"server,liquidator,web,price-pooler,price-to-frontend,worker\" -c \"green,blue,magenta,yellow,cyan,red\"        \"npm run start --workspace=server\"        \"npm run start --workspace=liquidator\"        \"npm run start --workspace=web\"        \"npm run start --workspace=price-pooler\"        \"npm run start --workspace=price-to-frontend\"        \"npm run start --workspace=add-price-to-db\""
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { signIn } from "@/auth";
+import { auth, signIn } from "@/auth";
 import {
   Card,
   CardContent,
@@ -7,8 +7,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Mail, TrendingUp, BarChart3, Shield, Zap } from "lucide-react";
+import { redirect } from "next/navigation";
 
-const SignIn = () => {
+const SignIn = async () => {
+  const session = await auth();
+  if (session && session.user && session.user.email) {
+    redirect("/");
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 items-center">
