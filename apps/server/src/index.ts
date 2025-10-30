@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -7,7 +5,9 @@ import { prisma } from "@repo/db";
 
 import { getToken } from "next-auth/jwt";
 import { createClient } from "redis";
-dotenv.config();
+import path from "path";
+
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const app = express();
 app.use(cors());
@@ -262,6 +262,8 @@ async function main() {
     const { id } = req.query;
     try {
       console.log("fetching for id : ", id);
+      console.log("Resolved prisma in balance route =", prisma);
+
       const user = await prisma.user.findUnique({
         where: {
           id: (id as string) || "",

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { prisma } from "@repo/db";
 
 import { createClient } from "redis";
@@ -9,11 +7,21 @@ async function main() {
   await redis.connect();
 
   const activeTrades: any[] = [];
-  const closingTrades = new Set<string>(); // prevent double-close
+  const closingTrades = new Set<string>();
 
-  const liveAssetPrice = {};
+  type LiveAssetPriceEntry = {
+    bid: number;
+    ask: number;
+  };
+
+  type LiveAssetPrice = {
+    [symbol: string]: LiveAssetPriceEntry;
+  };
+
+  const liveAssetPrice: LiveAssetPrice = {};
 
   // Load all open trades at startup
+
   const trades = await prisma.trade.findMany({
     where: { isClosed: false },
   });
@@ -45,7 +53,13 @@ async function main() {
   await redis.subscribe("binance:livePrice", async (data) => {
     try {
       const parsed = JSON.parse(data);
-      const { price, symbol } = parsed;
+      const {
+        price,
+        symbol,
+      }: {
+        price: any;
+        symbol: string;
+      } = parsed;
 
       if (!price?.bid || !price?.ask) {
         console.warn("Invalid price payload:", parsed);
@@ -56,7 +70,7 @@ async function main() {
       const ask = price.ask;
 
       if (!liveAssetPrice[symbol]) {
-        liveAssetPrice[symbol] = {};
+        liveAssetPrice[symbol] = { bid: 0, ask: 0 };
       }
 
       liveAssetPrice[symbol].bid = bid;
@@ -65,7 +79,7 @@ async function main() {
       for (const trade of activeTrades) {
         if (closingTrades.has(trade.id)) continue;
 
-        const currentBid = liveAssetPrice[trade.symbol].bik;
+        const currentBid = liveAssetPrice[trade.symbol].bid;
         const currentAsk = liveAssetPrice[trade.symbol].ask;
 
         let pnl: number;

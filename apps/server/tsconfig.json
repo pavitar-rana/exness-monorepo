@@ -1,20 +1,11 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
     "module": "NodeNext",
-    "target": "esnext",
-    "sourceMap": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
     "moduleResolution": "NodeNext",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "baseUrl": ".",
-    "paths": {
-      "@repo/db": ["../../packages/db/src/index.ts"]
-    }
+    "target": "ES2020",
+    "sourceMap": true,
+    "outDir": "dist",
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]
