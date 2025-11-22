@@ -18,7 +18,8 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@prisma/client": "^6.17.0"
+    "@prisma/client": "^6.17.0",
+    "dotenv": "^16.0.3"
   },
   "devDependencies": {
     "@types/node": "^22.18.9",

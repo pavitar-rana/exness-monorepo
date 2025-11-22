@@ -9,7 +9,7 @@ const client = new Client({
 await client.connect();
 
 await client.query(`
-CREATE TABLE assetPrice (
+CREATE TABLE metrics.assetPrice (
   "time"      timestamptz not null,
   symbol  TEXT        NOT NULL,
   price   DOUBLE PRECISION
@@ -43,6 +43,13 @@ for (const candle of candleTabls) {
     FROM metrics.assetPrice
     GROUP BY bucket, symbol;
   `);
+
+  await client.query(`
+     SELECT add_continuous_aggregate_policy('${candle.name}',
+     start_offset => INTERVAL '1 day',
+     end_offset   => INTERVAL '1 minute',
+     schedule_interval => INTERVAL '${candle.chunkTime}');
+     `);
 }
 
 await client.end();
